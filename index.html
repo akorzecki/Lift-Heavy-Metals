@@ -966,37 +966,642 @@
           ]);
         }
 
-        if (exCount === 0) {
-          const starterExercises = [
-            {
-              id: 'ex-seed-bench-press',
-              name: 'Bench Press',
-              category: 'Chest',
-              description: 'Barbell flat bench press',
-              photoBase64: null
-            },
-            {
-              id: 'ex-seed-barbell-squat',
-              name: 'Barbell Squat',
-              category: 'Legs',
-              description: 'Full depth back squat',
-              photoBase64: null
-            },
-            {
-              id: 'ex-seed-barbell-deadlift',
-              name: 'Barbell Deadlift',
-              category: 'Back',
-              description: 'Conventional deadlift from floor',
-              photoBase64: null
-            },
-            {
-              id: 'ex-seed-overhead-press',
-              name: 'Overhead Press',
-              category: 'Shoulders',
-              description: 'Standing barbell press',
-              photoBase64: null
-            }
-          ];
+        const starterExercises = [
+          // --- Core / Abdominals (Misc) ---
+          {
+            id: 'ex-seed-ab-crunch-machine',
+            name: 'Ab Crunch Machine',
+            category: 'Misc',
+            description: 'Adjust seat so thoracic spine aligns with pivot; brace core and curl ribcage toward pelvis without pulling from arms.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-ab-crunch',
+            name: 'Ab Crunch',
+            category: 'Misc',
+            description: 'Supine on mat with knees bent; flex spine to elevate shoulder blades off the floor while maintaining neutral cervical posture.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-decline-bench-crunch',
+            name: 'Decline Bench Crunch',
+            category: 'Misc',
+            description: 'Anchor ankles on decline rollers; hinge back to maintain continuous abdominal tension before curling ribcage forward.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-lying-leg-raises',
+            name: 'Lying Leg Raises',
+            category: 'Misc',
+            description: 'Supine on bench or mat; anchor pelvis into posterior tilt, elevate legs while eliminating lumbar hyperextension.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-leg-raises',
+            name: 'Leg Raises',
+            category: 'Misc',
+            description: 'Hanging from bar or captain’s chair; roll pelvis upward toward sternum rather than merely hinging hip flexors.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-sit-ups',
+            name: 'Sit Ups',
+            category: 'Misc',
+            description: 'Supine with feet planted; articulate spine sequentially from floor through thoracic extension without cervical tugging.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-cable-crunch',
+            name: 'Cable Crunch',
+            category: 'Misc',
+            description: 'Kneeling with rope attachment pinned at temples; lock hips stationary and flex spine to pull elbows toward thighs.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-cable-woodchoppers',
+            name: 'Cable Woodchoppers',
+            category: 'Misc',
+            description: 'Diagonal high-to-low or low-to-high pull across torso; rotate through thoracic spine and pivot rear foot while bracing core.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-russian-twist',
+            name: 'Russian Twist',
+            category: 'Misc',
+            description: 'Seated V-sit posture with feet elevated; rotate torso controlled side-to-side without dropping chest angle.',
+            photoBase64: null
+          },
+        
+          // --- Back ---
+          {
+            id: 'ex-seed-barbell-deadlift',
+            name: 'Barbell Deadlift',
+            category: 'Back',
+            description: 'Conventional deadlift from floor; bar over midfoot, engage lats to wedge hips, push floor away through leg drive.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-deadlift',
+            name: 'Deadlift',
+            category: 'Back',
+            description: 'Standard hip hinge pull from floor; brace intra-abdominal pressure, maintain neutral spine, lock out glutes.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-low-barbell-row',
+            name: 'Low Barbell Row',
+            category: 'Back',
+            description: 'Torso hinged at 45 degrees; drive elbows back low toward hips to bias latissimus dorsi with elbows tucked.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-high-barbell-row',
+            name: 'High Barbell Row',
+            category: 'Back',
+            description: 'Bent-over hinge; pull barbell toward lower sternum with flared elbows (60-70 degrees) to load rear delts, rhomboids, and traps.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-low-cable-row',
+            name: 'Low Cable Row',
+            category: 'Back',
+            description: 'Seated neutral spine; drive handle toward naval keeping elbows tight to sides to emphasize lower lat fiber contraction.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-high-cable-row',
+            name: 'High Cable Row',
+            category: 'Back',
+            description: 'Cable pulley set high; pull handle back and down toward upper abdomen, actively retracting scapulae.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-isolated-low-cable-row',
+            name: 'Isolated Low Cable Row',
+            category: 'Back',
+            description: 'Single-arm setup; align line of pull with lat fibers, driving elbow tight along ribcage into deep lumbar extension.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-isolated-high-cable-row',
+            name: 'Isolated High Cable Row',
+            category: 'Back',
+            description: 'Unilateral cable row angled downward; focus on unilateral scapular retraction and upper back musculature.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-pull-up',
+            name: 'Pull Up',
+            category: 'Back',
+            description: 'Pronated grip slightly wider than shoulder width; depress scapulae first, drive elbows toward floor to chest level.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-chin-up',
+            name: 'Chin Up',
+            category: 'Back',
+            description: 'Supinated grip shoulder-width; pull chest toward bar, biasing latissimus dorsi and elbow flexors throughout concentric.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-assisted-pull-up',
+            name: 'Machine Assisted Pull Up',
+            category: 'Back',
+            description: 'Kneeling or standing on counterweight pad; maintain strict vertical bar path and deliberate eccentric descent.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-assisted-chin-up',
+            name: 'Machine Assisted Chin Up',
+            category: 'Back',
+            description: 'Counterbalanced pad with supinated grip; full scapular stretch at bottom to chin-over-bar finish without momentum.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-lateral-pulldown',
+            name: 'Lateral Pulldown',
+            category: 'Back',
+            description: 'Thighs locked under pads; drive elbows downward and inward along the coronal plane, pulling bar to upper clavicle.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-isolated-lateral-pulldown',
+            name: 'Isolated Lateral Pulldown',
+            category: 'Back',
+            description: 'Single-arm D-handle setup; stabilize opposite hand, pull elbow in line with hip to optimize isolated lat contraction.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-lat-pullover',
+            name: 'Lat Pullover',
+            category: 'Back',
+            description: 'Standing or kneeling at cable or bench; slight elbow bend locked, sweep arms in an arc downward to pocket level.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-cable-kelso-shrug',
+            name: 'Cable Kelso Shrug',
+            category: 'Back',
+            description: 'Chest-supported or seated on cable row; isolate horizontal scapular retraction and protraction without bending elbows.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-dumbbell-kelso-shrug',
+            name: 'Dumbbell Kelso Shrug',
+            category: 'Back',
+            description: 'Chest-supported on incline bench; retract scapulae horizontally against gravity targeting middle traps and rhomboids.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-hyperextensions',
+            name: 'Hyperextensions',
+            category: 'Back',
+            description: '45-degree roman chair; hinge at hips, maintain braced neutral thoracic/lumbar spine to load spinal erectors and posterior chain.',
+            photoBase64: null
+          },
+        
+          // --- Chest ---
+          {
+            id: 'ex-seed-bench-press',
+            name: 'Bench Press',
+            category: 'Chest',
+            description: 'Barbell flat bench press; feet planted, retract scapulae into bench, touch lower sternum and press to lockout.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-incline-bench-press',
+            name: 'Incline Bench Press',
+            category: 'Chest',
+            description: 'Bench angle at 30 degrees; bar descends to upper clavicular head with wrists stacked over elbows.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-decline-bench-press',
+            name: 'Decline Bench Press',
+            category: 'Chest',
+            description: 'Legs anchored on decline bench; lower barbell to inframammary fold, press vertically to load lower sternal fibers.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-hex-bar-bench-press',
+            name: 'Hex Bar Bench Press',
+            category: 'Chest',
+            description: 'Neutral-grip press utilizing specialized multi-grip bar; reduces shoulder internal rotation while driving chest engagement.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-dumbbell-chest-press',
+            name: 'Dumbbell Chest Press',
+            category: 'Chest',
+            description: 'Flat bench; dumbbells flared at roughly 45 degrees, lower to deep chest stretch, converge slightly at top.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-incline-dumbbell-chest-press',
+            name: 'Incline Dumbbell Chest Press',
+            category: 'Chest',
+            description: 'Bench at 30-45 degrees; maintain retracted scapulae, press dumbbells directly vertical over upper chest.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-decline-dumbbell-chest-press',
+            name: 'Decline Dumbbell Chest Press',
+            category: 'Chest',
+            description: 'Decline angle; stabilize dumbbells at lower chest line, pressing upward with minimal anterior shoulder stress.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-chest-press',
+            name: 'Machine Chest Press',
+            category: 'Chest',
+            description: 'Handles adjusted to mid-chest level; brace back against pad, drive handles forward along converging path of motion.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-incline-machine-chest-press',
+            name: 'Incline Machine Chest Press',
+            category: 'Chest',
+            description: 'Incline convergence trajectory; seat adjusted so handles align with clavicle, press upward through clavicular head.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-decline-machine-chest-press',
+            name: 'Decline Machine Chest Press',
+            category: 'Chest',
+            description: 'Down-and-forward pressing motion; maintain chest-out posture to load costal fibers of the pectoralis major.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-pec-deck-chest-fly',
+            name: 'Pec Deck Chest Fly',
+            category: 'Chest',
+            description: 'Elbows slightly bent and pinned; adduct humeri across midline, focusing on deep stretch and hard peak contraction.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-cable-chest-fly',
+            name: 'Cable Chest Fly',
+            category: 'Chest',
+            description: 'Pulleys set chest height; step forward into split stance, sweep hands together along midline with soft elbow lock.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-low-high-cable-chest-fly',
+            name: 'Low/High Cable Chest Fly',
+            category: 'Chest',
+            description: 'Pulleys anchored low; sweep hands upward and inward toward face level to isolate upper clavicular pectoralis.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-high-low-cable-chest-fly',
+            name: 'High/Low Cable Chest Fly',
+            category: 'Chest',
+            description: 'Pulleys anchored overhead; sweep handles downward and inward crossing near hips to target lower/sternal chest.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-push-up',
+            name: 'Push Up',
+            category: 'Chest',
+            description: 'Prone plank posture with hands under shoulders; descend until chest grazes floor, press up to full scapular protraction.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-deficit-push-up',
+            name: 'Deficit Push Up',
+            category: 'Chest',
+            description: 'Hands elevated on blocks or plates; allows deep chest stretch below hand plane before pressing through lockout.',
+            photoBase64: null
+          },
+        
+          // --- Shoulders ---
+          {
+            id: 'ex-seed-overhead-press',
+            name: 'Overhead Press',
+            category: 'Shoulders',
+            description: 'Standing barbell press; glutes and core braced, bar clears chin and locks out directly over midfoot and cervical spine.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-barbell-shoulder-press',
+            name: 'Barbell Shoulder Press',
+            category: 'Shoulders',
+            description: 'Seated or standing barbell press; lower to chin/collarbone level, press straight overhead without spinal overarching.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-shoulder-press',
+            name: 'Machine Shoulder Press',
+            category: 'Shoulders',
+            description: 'Seat height set so handles align with earlobes; press along guided arc, maintaining continuous anterior delt tension.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-dumbbell-lateral-raise',
+            name: 'Dumbbell Lateral Raise',
+            category: 'Shoulders',
+            description: 'Slight forward torso lean; elevate dumbbells in the scapular plane (30 degrees forward) to parallel, leading with elbows.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-cable-lateral-raise',
+            name: 'Cable Lateral Raise',
+            category: 'Shoulders',
+            description: 'Low pulley set behind or in front of hips; raise D-handle out to shoulder height with constant tension on medial delt.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-dumbbell-front-raise',
+            name: 'Dumbbell Front Raise',
+            category: 'Shoulders',
+            description: 'Standing tall; raise dumbbells straight forward in front of torso to eye level, controlling the eccentric descent.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-cable-front-raise',
+            name: 'Cable Front Raise',
+            category: 'Shoulders',
+            description: 'Cable pulley at low position between legs; raise handle forward to shoulder height with continuous cable resistance.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-rear-deltoid-cable-fly',
+            name: 'Rear Deltoid Cable Fly',
+            category: 'Shoulders',
+            description: 'Cables set eye level, no handles; pull across torso horizontally keeping arms nearly straight to isolate posterior delts.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-isolated-rear-deltoid-cable-fly',
+            name: 'Isolated Rear Deltoid Cable Fly',
+            category: 'Shoulders',
+            description: 'Unilateral cable rear fly; align cable angle across opposite shoulder to maximize rear deltoid line of force.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-dumbbell-trap-shrug',
+            name: 'Dumbbell Trap Shrug',
+            category: 'Shoulders',
+            description: 'Dumbbells held at sides; elevate scapulae directly vertical toward ears without rolling shoulders backward.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-trap-shrug',
+            name: 'Machine Trap Shrug',
+            category: 'Shoulders',
+            description: 'Standing in shrug/deadlift machine; pure vertical elevation and depression of the shoulder girdle against loaded pads.',
+            photoBase64: null
+          },
+        
+          // --- Arms (Biceps, Triceps, Forearms) ---
+          {
+            id: 'ex-seed-bicep-barbell-curl',
+            name: 'Bicep Barbell Curl',
+            category: 'Arms',
+            description: 'Supinated grip shoulder-width; pin elbows slightly in front of ribs, curl bar through complete range without torso swing.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-bicep-cable-curl',
+            name: 'Bicep Cable Curl',
+            category: 'Arms',
+            description: 'Straight bar or EZ-attachment on low cable; continuous tension through curl arc with elbows fixed.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-isolated-bicep-cable-curl',
+            name: 'Isolated Bicep Cable Curl',
+            category: 'Arms',
+            description: 'Single-arm cable curl; align line of resistance directly behind forearm for isolated peak bicep contraction.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-bicep-curl',
+            name: 'Machine Bicep Curl',
+            category: 'Arms',
+            description: 'Triceps flat against preacher pad, elbows aligned with machine axis; curl handle upward without lifting upper arms.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-faceaway-bayesian-cable-bicep-curl',
+            name: 'Faceaway Bayesian Cable Bicep Curl',
+            category: 'Arms',
+            description: 'Step forward facing away from low pulley; arm starts in extension behind torso, curling into heavy stretch-mediated tension.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-dumbbell-hammer-curl',
+            name: 'Dumbbell Hammer Curl',
+            category: 'Arms',
+            description: 'Neutral palms-in grip; curl upward focusing on brachialis and brachioradialis development without rotation.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-cable-hammer-curl',
+            name: 'Cable Hammer Curl',
+            category: 'Arms',
+            description: 'Rope attachment on low pulley; neutral grip pulling toward shoulders with elbows pinned to sides.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-reverse-curl',
+            name: 'Reverse Curl',
+            category: 'Arms',
+            description: 'Pronated overhand grip; curl bar upward to overload forearm extensors and brachioradialis.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-zottmann-curl',
+            name: 'Zottmann Curl',
+            category: 'Arms',
+            description: 'Curl up with supinated grip, rotate to pronated grip at peak, lower slowly through eccentric descent.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-wrist-curl',
+            name: 'Wrist Curl',
+            category: 'Arms',
+            description: 'Forearms resting on thighs or bench; isolate wrist flexors curling bar upward from fingertips through full flexion.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-tricep-pushdown',
+            name: 'Tricep Pushdown',
+            category: 'Arms',
+            description: 'Cable attachment at chest height; lock elbows to sides, extend forearms downward to full triceps lockout.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-benched-tricep-pushdown',
+            name: 'Benched Tricep Pushdown',
+            category: 'Arms',
+            description: 'Chest supported or seated on incline facing high pulley; push down with strict elbow isolation removing momentum.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-overhead-tricep-extension',
+            name: 'Overhead Tricep Extension',
+            category: 'Arms',
+            description: 'Cable or dumbbell held overhead; bend at elbows into deep stretch on long head of triceps, extend upward to lockout.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-cable-crossover-tricep-extension',
+            name: 'Cable Crossover Tricep Extension',
+            category: 'Arms',
+            description: 'Dual high pulleys without handles; hold balls of cables crossed, extend arms downward and outward along tricep fibers.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-close-grip-bench-press',
+            name: 'Close Grip Bench Press',
+            category: 'Arms',
+            description: 'Hands spaced shoulder-width on barbell; tuck elbows near torso, lower to chest and press emphasizing triceps extension.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-dip',
+            name: 'Dip',
+            category: 'Arms',
+            description: 'Parallel bars; keep torso vertical to bias triceps, descend to 90 degrees elbow flexion and press to full extension.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-assisted-dip',
+            name: 'Machine Assisted Dip',
+            category: 'Arms',
+            description: 'Counterweight pad under knees; lower controlled to 90-degree bend and press lockout maintaining triceps tension.',
+            photoBase64: null
+          },
+        
+          // --- Legs ---
+          {
+            id: 'ex-seed-barbell-squat',
+            name: 'Barbell Squat',
+            category: 'Legs',
+            description: 'Full depth back squat; bar on upper traps, braced abdominal wall, break at hips and knees to parallel or below.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-hacksquat',
+            name: 'Hacksquat',
+            category: 'Legs',
+            description: 'Torso supported on sled; place feet low-to-mid platform, descend deep allowing knee travel for quad emphasis.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-pendulum-squat',
+            name: 'Pendulum Squat',
+            category: 'Legs',
+            description: 'Fixed arc squat machine; descend into deep knee flexion with counterbalanced resistance curve loading quads.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-smith-machine-squat',
+            name: 'Smith Machine Squat',
+            category: 'Legs',
+            description: 'Feet slightly forward on track; squat straight down along fixed rails to focus directly on knee extensor load.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-leg-press',
+            name: 'Machine Leg Press',
+            category: 'Legs',
+            description: 'Weight stack leg press; feet shoulder width on sled, lower knees to chest without lumbar rounding off pad.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-plate-loaded-leg-press',
+            name: 'Plate Loaded Leg Press',
+            category: 'Legs',
+            description: '45-degree sled; plant feet firmly, release stoppers, lower into deep hip/knee flexion, press without locking knees.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-bulgarian-split-squat',
+            name: 'Bulgarian Split Squat',
+            category: 'Legs',
+            description: 'Rear foot elevated on bench; descend front thigh to parallel, keeping front knee tracking over middle toes.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-lunge',
+            name: 'Lunge',
+            category: 'Legs',
+            description: 'Step forward or backward into 90/90 knee angles; drive through lead heel to return to standing baseline.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-leg-extension',
+            name: 'Leg Extension',
+            category: 'Legs',
+            description: 'Knees aligned with machine pivot; pad against lower shins, extend legs fully and pause briefly at peak contraction.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-leg-curl',
+            name: 'Leg Curl',
+            category: 'Legs',
+            description: 'Seated hamstring curl; lap pad tight against thighs, curl heels backward beneath seat through full knee flexion.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-prone-leg-curl',
+            name: 'Prone Leg Curl',
+            category: 'Legs',
+            description: 'Lying face down on machine bench; keep hips pressed firmly into pad, curl heels toward glutes.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-barbell-rdl',
+            name: 'Barbell RDL',
+            category: 'Legs',
+            description: 'Slight knee bend; push hips backward into deep hinge, lowering bar along shins until hamstrings reach full stretch.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-machine-rdl',
+            name: 'Machine RDL',
+            category: 'Legs',
+            description: 'Lever or plate-loaded hinge; push hips posterior along guided plane to isolate hamstring and glute stretch.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-glute-thrust',
+            name: 'Glute Thrust',
+            category: 'Legs',
+            description: 'Upper back against bench, barbell across hips; drive through heels to elevate pelvis until hips reach full extension.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-hip-abduction-machine',
+            name: 'Hip Abduction Machine',
+            category: 'Legs',
+            description: 'Pads on outside of knees; push outward against resistance to target gluteus medius and minimus.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-hip-adduction-machine',
+            name: 'Hip Adduction Machine',
+            category: 'Legs',
+            description: 'Pads on inside of knees; squeeze thighs together smoothly toward midline to load the adductor complex.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-calf-raise',
+            name: 'Calf Raise',
+            category: 'Legs',
+            description: 'Standing on block with balls of feet; drop into deep calf stretch, push through big toes into full plantarflexion.',
+            photoBase64: null
+          },
+          {
+            id: 'ex-seed-seated-calf-raise',
+            name: 'Seated Calf Raise',
+            category: 'Legs',
+            description: 'Knees bent at 90 degrees with pad across thighs; lower heels into full stretch, extend onto toes to bias the soleus.',
+            photoBase64: null
+          }
+        ];
           const tx = this.db.transaction('exercises', 'readwrite');
           for (const ex of starterExercises) {
             await tx.store.put(ex);
