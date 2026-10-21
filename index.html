@@ -1,0 +1,3312 @@
+The finalized, single-file `index.html` application below implements **Tab 3: Historical Log** (category filtering, dynamic template drift detection, read-only detail modal, and full retroactive editing) and **Tab 5: Settings & Data Export** (persistent accessibility toggles for Light/Dark Mode, Dyslexic Font, and High Contrast Mode, plus CSV and JSON full-database Blob downloads) while preserving all existing features.
+
+```html
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lift Heavy Metals">
+  <link rel="apple-touch-icon" href="https://api.iconify.design/lucide:dumbbell.svg?color=%23ffffff&height=180">
+  <title>Lift Heavy Metals</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/open-dyslexic-regular.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      overscroll-behavior-y: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    input, textarea, select {
+      user-select: auto;
+      -webkit-user-select: auto;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #020617;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+
+    /* Accessibility: Dyslexic Font Override */
+    html.dyslexic-font,
+    html.dyslexic-font body,
+    html.dyslexic-font input,
+    html.dyslexic-font textarea,
+    html.dyslexic-font select,
+    html.dyslexic-font button {
+      font-family: 'OpenDyslexicRegular', 'Comic Sans MS', 'Verdana', 'Trebuchet MS', sans-serif !important;
+      letter-spacing: 0.035em;
+      line-height: 1.6;
+    }
+
+    /* Accessibility: Clean Light Mode Overrides (when html does not have .dark and not .high-contrast) */
+    html:not(.dark):not(.high-contrast) body {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+    }
+    html:not(.dark):not(.high-contrast) .bg-slate-950,
+    html:not(.dark):not(.high-contrast) .bg-slate-950\/90,
+    html:not(.dark):not(.high-contrast) .bg-slate-950\/80,
+    html:not(.dark):not(.high-contrast) .bg-slate-950\/70,
+    html:not(.dark):not(.high-contrast) .bg-slate-950\/60 {
+      background-color: #f1f5f9 !important;
+    }
+    html:not(.dark):not(.high-contrast) .bg-slate-900,
+    html:not(.dark):not(.high-contrast) .bg-slate-900\/95 {
+      background-color: #ffffff !important;
+    }
+    html:not(.dark):not(.high-contrast) .bg-slate-800,
+    html:not(.dark):not(.high-contrast) .bg-slate-800\/80 {
+      background-color: #e2e8f0 !important;
+    }
+    html:not(.dark):not(.high-contrast) .text-slate-100,
+    html:not(.dark):not(.high-contrast) .text-slate-200 {
+      color: #0f172a !important;
+    }
+    html:not(.dark):not(.high-contrast) .text-slate-300 {
+      color: #334155 !important;
+    }
+    html:not(.dark):not(.high-contrast) .text-slate-400,
+    html:not(.dark):not(.high-contrast) .text-slate-500 {
+      color: #475569 !important;
+    }
+    html:not(.dark):not(.high-contrast) .border-slate-800,
+    html:not(.dark):not(.high-contrast) .border-slate-800\/90,
+    html:not(.dark):not(.high-contrast) .border-slate-800\/80,
+    html:not(.dark):not(.high-contrast) .border-slate-800\/70,
+    html:not(.dark):not(.high-contrast) .border-slate-700,
+    html:not(.dark):not(.high-contrast) .border-slate-700\/80 {
+      border-color: #cbd5e1 !important;
+    }
+
+    /* Accessibility: High Contrast Mode (Pure #000000 background & stark borders/text) */
+    html.high-contrast body,
+    html.high-contrast .bg-slate-950,
+    html.high-contrast .bg-slate-950\/90,
+    html.high-contrast .bg-slate-950\/80,
+    html.high-contrast .bg-slate-950\/70,
+    html.high-contrast .bg-slate-950\/60,
+    html.high-contrast .bg-slate-900,
+    html.high-contrast .bg-slate-900\/95,
+    html.high-contrast .bg-slate-800,
+    html.high-contrast .bg-slate-800\/80 {
+      background-color: #000000 !important;
+      color: #ffffff !important;
+    }
+    html.high-contrast .border-slate-800,
+    html.high-contrast .border-slate-800\/90,
+    html.high-contrast .border-slate-800\/80,
+    html.high-contrast .border-slate-800\/70,
+    html.high-contrast .border-slate-700,
+    html.high-contrast .border-slate-700\/80 {
+      border-color: #ffffff !important;
+      border-width: 1.5px !important;
+    }
+    html.high-contrast .text-slate-100,
+    html.high-contrast .text-slate-200,
+    html.high-contrast .text-slate-300,
+    html.high-contrast .text-slate-400,
+    html.high-contrast .text-slate-500 {
+      color: #ffffff !important;
+    }
+    html.high-contrast input,
+    html.high-contrast textarea,
+    html.high-contrast select {
+      background-color: #000000 !important;
+      color: #ffffff !important;
+      border: 1.5px solid #ffffff !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Top App Header with iOS Status Bar Safe Area -->
+  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 pt-[env(safe-area-inset-top)]">
+    <div class="px-4 h-14 flex items-center justify-between max-w-2xl mx-auto w-full">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-inner shadow-blue-400/30">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h2m14 0h2M6 7v6m12-6v6M9 5v10m6-10v10M9 10h6" />
+          </svg>
+        </div>
+        <div>
+          <h1 id="header-title" class="text-base font-bold tracking-tight text-slate-100 leading-none">Active Routine</h1>
+          <p id="header-subtitle" class="text-[11px] text-slate-400 font-medium mt-0.5">GymTrackerDB v1</p>
+        </div>
+      </div>
+      <div id="header-badge" class="text-xs font-mono px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+        Ready
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="flex-1 w-full max-w-2xl mx-auto px-4 pt-4 pb-32 overflow-y-auto">
+
+    <!-- TAB 1: Active Routine (Fully Functional) -->
+    <section id="tab-active" class="tab-view space-y-4">
+      <div id="active-empty-state" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-5">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Ready to Train
+          </span>
+          <span class="text-xs text-slate-400 font-mono" id="active-routine-count-label">0 Routines Available</span>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-bold text-slate-100 mb-1.5">Start a Workout Session</h2>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Launch an empty custom session on the fly or load a saved routine template with automatic Data Group weight and rep inheritance.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <button
+            type="button"
+            id="btn-start-custom-workout"
+            class="w-full py-3.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-800/80 border border-slate-700 text-slate-100 font-semibold text-sm flex items-center justify-center gap-2 transition shadow"
+          >
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>Start Empty Custom Workout</span>
+          </button>
+
+          <button
+            type="button"
+            id="btn-start-saved-routine"
+            class="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-blue-950/60"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z" />
+            </svg>
+            <span>Start from Saved Routine</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Session Interface -->
+      <div id="active-session-container" class="hidden space-y-4">
+        <div class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-ping shrink-0"></span>
+              <h2 id="active-session-title" class="text-base font-bold text-slate-100 truncate">Routine Name</h2>
+            </div>
+            <div class="flex items-center gap-2 mt-1 flex-wrap">
+              <span id="active-session-timer" class="text-sm font-mono font-bold text-blue-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">00:00</span>
+              <span id="active-session-datagroup-badge" class="text-[11px] font-medium text-slate-400 truncate">Data Group: Global</span>
+              <span id="active-session-modified-badge" class="hidden text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">Modified</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="btn-finish-workout"
+            class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-red-950/60 shrink-0 transition"
+          >
+            Finish Workout
+          </button>
+        </div>
+
+        <div id="active-exercises-list" class="space-y-4"></div>
+
+        <div class="pt-2 pb-4">
+          <button
+            type="button"
+            id="btn-active-add-exercise"
+            class="w-full py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 active:bg-slate-900 border-2 border-dashed border-slate-700 hover:border-blue-500 text-blue-400 font-semibold text-sm flex items-center justify-center gap-2 transition shadow-lg"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>+ Add Exercise</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Create Routines (Fully Functional) -->
+    <section id="tab-routines" class="tab-view hidden space-y-4">
+      <div class="sticky top-0 z-20 pt-1 pb-2 bg-slate-950/90 backdrop-blur-sm">
+        <button
+          id="btn-open-routine-modal"
+          type="button"
+          class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-sm shadow-lg shadow-blue-950/50 flex items-center justify-center gap-2 transition"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>+ New Routine</span>
+        </button>
+      </div>
+
+      <div id="routines-list-container" class="space-y-3"></div>
+    </section>
+
+    <!-- TAB 3: Historical Log (Fully Functional) -->
+    <section id="tab-history" class="tab-view hidden space-y-4">
+      <!-- Top Filter & Summary Bar -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-bold text-slate-100">Workout History</h2>
+            <span id="history-log-count-label" class="text-xs font-mono px-2 py-0.5 rounded-full bg-slate-800 text-blue-400 border border-slate-700">0 Entries</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Tap any session card to inspect sets or retroactively edit logs.</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label for="history-category-filter" class="text-xs font-semibold text-slate-400 uppercase tracking-wider shrink-0">
+            Category:
+          </label>
+          <select
+            id="history-category-filter"
+            class="w-full sm:w-44 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs font-semibold focus:outline-none focus:border-blue-500"
+          >
+            <option value="All">All Categories</option>
+            <option value="Chest">Chest</option>
+            <option value="Back">Back</option>
+            <option value="Legs">Legs</option>
+            <option value="Arms">Arms</option>
+            <option value="Shoulders">Shoulders</option>
+            <option value="Neck">Neck</option>
+            <option value="Stretch">Stretch</option>
+            <option value="Misc">Misc</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Historical Workout Cards List -->
+      <div id="history-logs-list" class="space-y-3"></div>
+    </section>
+
+    <!-- TAB 4: Exercise Library (Fully Functional) -->
+    <section id="tab-library" class="tab-view hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-bold text-slate-100">Exercise Directory</h2>
+            <p id="library-count-subtitle" class="text-xs text-slate-400">0 exercises stored</p>
+          </div>
+          <span class="sm:hidden text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700" id="library-mode-badge">Grouped</span>
+        </div>
+
+        <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800" role="group" aria-label="Library view mode">
+          <button
+            type="button"
+            id="btn-view-grouped"
+            class="py-2 px-3 rounded-lg text-xs font-semibold transition text-center bg-blue-600 text-white shadow"
+          >
+            Grouped by Category
+          </button>
+          <button
+            type="button"
+            id="btn-view-alpha"
+            class="py-2 px-3 rounded-lg text-xs font-semibold transition text-center text-slate-400 hover:text-slate-200"
+          >
+            Alphabetical List (A-Z)
+          </button>
+        </div>
+      </div>
+
+      <div id="library-content-container" class="space-y-2.5"></div>
+
+      <div class="fixed right-4 bottom-20 z-30 pb-[env(safe-area-inset-bottom)] pointer-events-none">
+        <button
+          type="button"
+          id="btn-open-exercise-modal"
+          aria-label="Add Exercise"
+          class="pointer-events-auto w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white shadow-xl shadow-blue-950/80 border border-blue-400/30 flex items-center justify-center transition transform"
+        >
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 5: Settings & Export (Fully Functional) -->
+    <section id="tab-settings" class="tab-view hidden space-y-4">
+      <!-- Accessibility & Visual Preferences Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-100">Accessibility &amp; Display</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Preferences persist automatically in IndexedDB.</p>
+          </div>
+          <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            Live Sync
+          </span>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Dark Mode Toggle -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-100">Dark Mode</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Toggle between default slate dark theme and clean light theme.</p>
+            </div>
+            <button
+              type="button"
+              id="toggle-setting-dark"
+              role="switch"
+              aria-checked="true"
+              class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-blue-600 focus:outline-none"
+            >
+              <span
+                id="knob-setting-dark"
+                class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-5"
+              ></span>
+            </button>
+          </div>
+
+          <!-- Dyslexic Font Toggle -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-100">Dyslexic Font</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Applies global OpenDyslexic / high-legibility font spacing.</p>
+            </div>
+            <button
+              type="button"
+              id="toggle-setting-dyslexic"
+              role="switch"
+              aria-checked="false"
+              class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-slate-700 focus:outline-none"
+            >
+              <span
+                id="knob-setting-dyslexic"
+                class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"
+              ></span>
+            </button>
+          </div>
+
+          <!-- High Contrast Toggle -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-100">High Contrast Mode</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Forces pure #000000 backgrounds with stark white borders for sunlight visibility.</p>
+            </div>
+            <button
+              type="button"
+              id="toggle-setting-contrast"
+              role="switch"
+              aria-checked="false"
+              class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-slate-700 focus:outline-none"
+            >
+              <span
+                id="knob-setting-contrast"
+                class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"
+              ></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Portability & Backup Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+        <div class="border-b border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-slate-100">Data Portability &amp; Backup</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Export your workout history as flat CSV rows or dump the entire IndexedDB database to JSON.</p>
+        </div>
+
+        <div>
+          <label for="setting-export-format" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            Export Format
+          </label>
+          <select
+            id="setting-export-format"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-blue-500"
+          >
+            <option value="csv">CSV (.csv)</option>
+            <option value="json">JSON Backup (.json)</option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          id="btn-export-workout-data"
+          class="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-sm shadow-lg shadow-blue-950/50 flex items-center justify-center gap-2 transition"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Export Workout Data</span>
+        </button>
+
+        <p id="export-status-msg" class="hidden text-xs text-emerald-400 font-medium text-center"></p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: Add Exercise Modal (Tab 4) -->
+  <div
+    id="modal-exercise"
+    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-exercise-title"
+  >
+    <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden pb-[env(safe-area-inset-bottom)]">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 id="modal-exercise-title" class="text-base font-bold text-slate-100">Add New Exercise</h3>
+        <button
+          type="button"
+          id="btn-close-exercise-modal"
+          class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+          aria-label="Close modal"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="form-exercise" class="p-5 space-y-4 overflow-y-auto">
+        <div>
+          <label for="exercise-name" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            Exercise Name <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            id="exercise-name"
+            required
+            placeholder="e.g., Incline Dumbbell Press"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+        </div>
+
+        <div>
+          <label for="exercise-category" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            Category <span class="text-red-400">*</span>
+          </label>
+          <select
+            id="exercise-category"
+            required
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="Chest">Chest</option>
+            <option value="Back">Back</option>
+            <option value="Legs">Legs</option>
+            <option value="Arms">Arms</option>
+            <option value="Shoulders">Shoulders</option>
+            <option value="Neck">Neck</option>
+            <option value="Stretch">Stretch</option>
+            <option value="Misc">Misc</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="exercise-description" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            Description / Cues
+          </label>
+          <textarea
+            id="exercise-description"
+            rows="3"
+            placeholder="Setup notes, grip width, tempo, or form reminders..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+          ></textarea>
+        </div>
+
+        <div>
+          <label for="exercise-photo" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            Reference Photo (Optional)
+          </label>
+          <input
+            type="file"
+            id="exercise-photo"
+            accept="image/*"
+            class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl p-1.5"
+          >
+          <div id="exercise-photo-preview-wrap" class="hidden mt-2.5 relative bg-slate-950 border border-slate-800 rounded-xl p-2 flex items-center gap-3">
+            <img id="exercise-photo-preview" src="" alt="Preview" class="w-14 h-14 object-cover rounded-lg border border-slate-700">
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-medium text-slate-200 truncate">Image encoded to Base64</p>
+              <p id="exercise-photo-size" class="text-[11px] text-slate-400">Ready to store locally</p>
+            </div>
+            <button
+              type="button"
+              id="btn-clear-exercise-photo"
+              class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-red-400 font-medium transition"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+
+        <p id="exercise-form-error" class="hidden text-xs text-red-400 font-medium"></p>
+
+        <div class="pt-2 flex items-center gap-3">
+          <button
+            type="button"
+            id="btn-cancel-exercise"
+            class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-950/50 transition"
+          >
+            Save Exercise
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Create Routine Modal (Tab 2) -->
+  <div
+    id="modal-routine"
+    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-routine-title"
+  >
+    <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden pb-[env(safe-area-inset-bottom)]">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <h3 id="modal-routine-title" class="text-base font-bold text-slate-100">Create New Routine</h3>
+        <button
+          type="button"
+          id="btn-close-routine-modal"
+          class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+          aria-label="Close modal"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="form-routine" class="p-5 space-y-4 overflow-y-auto flex-1">
+        <div>
+          <label for="routine-name" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            Routine Name <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            id="routine-name"
+            required
+            placeholder="e.g., Upper Body Hypertrophy A"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+        </div>
+
+        <div>
+          <label for="routine-description" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            Description / Notes
+          </label>
+          <textarea
+            id="routine-description"
+            rows="2"
+            placeholder="Focus areas, warm-up protocol, or target RPE..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+          ></textarea>
+        </div>
+
+        <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <label for="routine-datagroup" class="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Data Group <span class="text-red-400">*</span>
+            </label>
+            <button
+              type="button"
+              id="btn-toggle-custom-group"
+              class="text-xs font-semibold text-blue-400 hover:text-blue-300 transition flex items-center gap-1"
+            >
+              <span>+ New Custom Group</span>
+            </button>
+          </div>
+
+          <select
+            id="routine-datagroup"
+            required
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          ></select>
+
+          <div id="custom-group-inline-box" class="hidden pt-2 border-t border-slate-800/80 space-y-2">
+            <label for="custom-group-name-input" class="block text-[11px] font-medium text-slate-400">
+              New Custom Data Group Name
+            </label>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                id="custom-group-name-input"
+                placeholder="e.g., Mesocycle Block 1"
+                class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-blue-500"
+              >
+              <button
+                type="button"
+                id="btn-save-custom-group"
+                class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition shrink-0"
+              >
+                Create
+              </button>
+              <button
+                type="button"
+                id="btn-cancel-custom-group"
+                class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition shrink-0"
+              >
+                Cancel
+              </button>
+            </div>
+            <p id="custom-group-error" class="hidden text-[11px] text-red-400"></p>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Select Exercises &amp; Configure Sets <span class="text-red-400">*</span>
+            </label>
+            <span id="routine-selected-count" class="text-xs font-mono text-blue-400">0 selected</span>
+          </div>
+          <div
+            id="routine-exercise-picker"
+            class="space-y-2 max-h-64 overflow-y-auto pr-1"
+          ></div>
+        </div>
+
+        <p id="routine-form-error" class="hidden text-xs text-red-400 font-medium"></p>
+
+        <div class="pt-2 flex items-center gap-3">
+          <button
+            type="button"
+            id="btn-cancel-routine"
+            class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-950/50 transition"
+          >
+            Save Routine
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Select Saved Routine Modal (Tab 1) -->
+  <div
+    id="modal-pick-routine"
+    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-pick-routine-title"
+  >
+    <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden pb-[env(safe-area-inset-bottom)]">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 id="modal-pick-routine-title" class="text-base font-bold text-slate-100">Start from Saved Routine</h3>
+        <button
+          type="button"
+          id="btn-close-pick-routine"
+          class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+          aria-label="Close modal"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="pick-routine-list" class="p-5 space-y-2.5 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: Mid-Workout Add Exercise Picker Modal (Tab 1) -->
+  <div
+    id="modal-active-add-exercise"
+    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-active-add-ex-title"
+  >
+    <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden pb-[env(safe-area-inset-bottom)]">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 id="modal-active-add-ex-title" class="text-base font-bold text-slate-100">Append Exercise to Workout</h3>
+        <button
+          type="button"
+          id="btn-close-active-add-ex"
+          class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+          aria-label="Close modal"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="active-add-exercise-list" class="p-5 space-y-2 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: Template Mutation Confirmation Modal (Tab 1) -->
+  <div
+    id="modal-template-mutation"
+    class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-mutation-title"
+  >
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+        </div>
+        <div>
+          <h3 id="modal-mutation-title" class="text-base font-bold text-slate-100">Routine Structure Modified</h3>
+          <p class="text-xs text-slate-400">Template Mutation Detected</p>
+        </div>
+      </div>
+
+      <p class="text-sm text-slate-200 leading-relaxed">
+        You modified this routine's structure. Would you like to permanently update the master routine template?
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+        <button
+          type="button"
+          id="btn-mutation-update-master"
+          class="py-2.5 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-950/50"
+        >
+          Yes, Update Master
+        </button>
+        <button
+          type="button"
+          id="btn-mutation-current-only"
+          class="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700"
+        >
+          No, Current Workout Only
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: Historical Log Read-Only & Retroactive Edit Modal (Tab 3) -->
+  <div
+    id="modal-history-detail"
+    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-history-detail-title"
+  >
+    <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden pb-[env(safe-area-inset-bottom)]">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+        <div class="min-w-0">
+          <h3 id="modal-history-detail-title" class="text-base font-bold text-slate-100 truncate">Workout Log Breakdown</h3>
+          <p id="modal-history-detail-subtitle" class="text-xs text-slate-400 truncate mt-0.5"></p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            id="btn-history-toggle-edit"
+            class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition shadow"
+          >
+            Edit Log
+          </button>
+          <button
+            type="button"
+            id="btn-close-history-detail"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+            aria-label="Close modal"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content Body -->
+      <div id="modal-history-detail-body" class="p-5 space-y-4 overflow-y-auto flex-1"></div>
+
+      <!-- Modal Footer (Shown during Edit Mode) -->
+      <div id="modal-history-detail-footer" class="hidden px-5 py-3.5 border-t border-slate-800 bg-slate-950/60 flex items-center gap-3 shrink-0">
+        <button
+          type="button"
+          id="btn-history-cancel-edit"
+          class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition"
+        >
+          Cancel Edit
+        </button>
+        <button
+          type="button"
+          id="btn-history-save-changes"
+          class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-lg shadow-emerald-950/50 transition"
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fixed Bottom Navigation Bar with iPhone Safe Area Padding -->
+  <nav
+    aria-label="Primary Bottom Navigation"
+    class="fixed bottom-0 inset-x-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 pb-[env(safe-area-inset-bottom)]"
+  >
+    <div class="max-w-2xl mx-auto grid grid-cols-5 h-16 px-1">
+      <button
+        type="button"
+        data-tab="active"
+        class="nav-tab-btn flex flex-col items-center justify-center gap-1 text-blue-400 transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span class="text-[10px] font-semibold tracking-tight leading-none">Active Routine</span>
+      </button>
+
+      <button
+        type="button"
+        data-tab="routines"
+        class="nav-tab-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200 transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+        <span class="text-[10px] font-semibold tracking-tight leading-none">Create Routines</span>
+      </button>
+
+      <button
+        type="button"
+        data-tab="history"
+        class="nav-tab-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200 transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-[10px] font-semibold tracking-tight leading-none">Historical Log</span>
+      </button>
+
+      <button
+        type="button"
+        data-tab="library"
+        class="nav-tab-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200 transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <span class="text-[10px] font-semibold tracking-tight leading-none">Library</span>
+      </button>
+
+      <button
+        type="button"
+        data-tab="settings"
+        class="nav-tab-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200 transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="text-[10px] font-semibold tracking-tight leading-none">Settings</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Application Script using ES Modules and idb@8 -->
+  <script type="module">
+    import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
+
+    const CATEGORIES = ['Chest', 'Back', 'Legs', 'Arms', 'Shoulders', 'Neck', 'Stretch', 'Misc'];
+
+    window.App = {
+      db: null,
+      state: {
+        activeTab: 'active',
+        categories: CATEGORIES,
+        libraryViewMode: 'grouped',
+        openAccordionCategories: new Set(CATEGORIES),
+        pendingExercisePhotoBase64: null,
+        exercises: [],
+        routines: [],
+        dataGroups: [],
+        workoutLogs: [],
+        settings: {
+          id: 'default',
+          darkMode: true,
+          dyslexicFont: false,
+          highContrast: false,
+          exportFormat: 'csv'
+        },
+        routineDraftSelections: {},
+        activeSession: null,
+        activeTimerInterval: null,
+        historyCategoryFilter: 'All',
+        selectedHistoryLogId: null,
+        historyEditMode: false,
+        historyEditDraft: null
+      },
+
+      async init() {
+        await this.initDB();
+        await this.seedIfEmpty();
+        await this.loadAllData();
+        this.applySettingsToDOM();
+        this.bindEvents();
+        this.renderAll();
+      },
+
+      async initDB() {
+        this.db = await openDB('GymTrackerDB', 1, {
+          upgrade(db) {
+            if (!db.objectStoreNames.contains('exercises')) {
+              const exStore = db.createObjectStore('exercises', { keyPath: 'id' });
+              exStore.createIndex('by-category', 'category', { unique: false });
+              exStore.createIndex('by-name', 'name', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('routines')) {
+              db.createObjectStore('routines', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('dataGroups')) {
+              db.createObjectStore('dataGroups', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('workoutLogs')) {
+              const logStore = db.createObjectStore('workoutLogs', { keyPath: 'id' });
+              logStore.createIndex('by-date', 'date', { unique: false });
+              logStore.createIndex('by-routineId', 'routineId', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('settings')) {
+              db.createObjectStore('settings', { keyPath: 'id' });
+            }
+          }
+        });
+      },
+
+      async seedIfEmpty() {
+        const [exCount, groupCount, settingsCount] = await Promise.all([
+          this.db.count('exercises'),
+          this.db.count('dataGroups'),
+          this.db.count('settings')
+        ]);
+
+        if (groupCount === 0) {
+          const tx = this.db.transaction('dataGroups', 'readwrite');
+          await Promise.all([
+            tx.store.put({ id: 'global', name: 'Global (All Routines)', type: 'global' }),
+            tx.store.put({ id: 'routine', name: 'Routine-Isolated', type: 'routine' }),
+            tx.done
+          ]);
+        }
+
+        if (exCount === 0) {
+          const starterExercises = [
+            {
+              id: 'ex-seed-bench-press',
+              name: 'Bench Press',
+              category: 'Chest',
+              description: 'Barbell flat bench press',
+              photoBase64: null
+            },
+            {
+              id: 'ex-seed-barbell-squat',
+              name: 'Barbell Squat',
+              category: 'Legs',
+              description: 'Full depth back squat',
+              photoBase64: null
+            },
+            {
+              id: 'ex-seed-barbell-deadlift',
+              name: 'Barbell Deadlift',
+              category: 'Back',
+              description: 'Conventional deadlift from floor',
+              photoBase64: null
+            },
+            {
+              id: 'ex-seed-overhead-press',
+              name: 'Overhead Press',
+              category: 'Shoulders',
+              description: 'Standing barbell press',
+              photoBase64: null
+            }
+          ];
+          const tx = this.db.transaction('exercises', 'readwrite');
+          for (const ex of starterExercises) {
+            await tx.store.put(ex);
+          }
+          await tx.done;
+        }
+
+        if (settingsCount === 0) {
+          await this.db.put('settings', {
+            id: 'default',
+            darkMode: true,
+            dyslexicFont: false,
+            highContrast: false,
+            exportFormat: 'csv'
+          });
+        }
+      },
+
+      async loadAllData() {
+        const [exercises, routines, dataGroups, workoutLogs, savedSettings] = await Promise.all([
+          this.db.getAll('exercises'),
+          this.db.getAll('routines'),
+          this.db.getAll('dataGroups'),
+          this.db.getAll('workoutLogs'),
+          this.db.get('settings', 'default')
+        ]);
+
+        this.state.exercises = exercises.sort((a, b) => a.name.localeCompare(b.name));
+        this.state.routines = routines;
+        this.state.dataGroups = dataGroups;
+        // Reverse-chronological order (newest first)
+        this.state.workoutLogs = workoutLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        if (savedSettings) {
+          this.state.settings = {
+            id: 'default',
+            darkMode: savedSettings.darkMode !== undefined ? Boolean(savedSettings.darkMode) : true,
+            dyslexicFont: Boolean(savedSettings.dyslexicFont),
+            highContrast: Boolean(savedSettings.highContrast),
+            exportFormat: savedSettings.exportFormat || 'csv'
+          };
+        }
+      },
+
+      generateId(prefix = 'id') {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          return `${prefix}-${crypto.randomUUID()}`;
+        }
+        return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      },
+
+      escapeHtml(str = '') {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      },
+
+      bindEvents() {
+        // Navigation Tabs
+        document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+            this.switchTab(targetTab);
+          });
+        });
+
+        // TAB 1: Active Workout Engine Events
+        document.getElementById('btn-start-custom-workout').addEventListener('click', () => {
+          this.startCustomWorkout();
+        });
+
+        document.getElementById('btn-start-saved-routine').addEventListener('click', () => {
+          this.openPickRoutineModal();
+        });
+
+        document.getElementById('btn-close-pick-routine').addEventListener('click', () => {
+          this.closePickRoutineModal();
+        });
+
+        document.getElementById('modal-pick-routine').addEventListener('click', (e) => {
+          if (e.target.id === 'modal-pick-routine') this.closePickRoutineModal();
+        });
+
+        document.getElementById('btn-active-add-exercise').addEventListener('click', () => {
+          this.openActiveAddExerciseModal();
+        });
+
+        document.getElementById('btn-close-active-add-ex').addEventListener('click', () => {
+          this.closeActiveAddExerciseModal();
+        });
+
+        document.getElementById('modal-active-add-exercise').addEventListener('click', (e) => {
+          if (e.target.id === 'modal-active-add-exercise') this.closeActiveAddExerciseModal();
+        });
+
+        document.getElementById('btn-finish-workout').addEventListener('click', async () => {
+          await this.finishActiveWorkout();
+        });
+
+        document.getElementById('btn-mutation-update-master').addEventListener('click', async () => {
+          await this.handleMutationChoice(true);
+        });
+
+        document.getElementById('btn-mutation-current-only').addEventListener('click', async () => {
+          await this.handleMutationChoice(false);
+        });
+
+        // TAB 3: Historical Log Events
+        document.getElementById('history-category-filter').addEventListener('change', (e) => {
+          this.state.historyCategoryFilter = e.target.value;
+          this.renderHistoryLog();
+        });
+
+        document.getElementById('btn-close-history-detail').addEventListener('click', () => {
+          this.closeHistoryDetailModal();
+        });
+
+        document.getElementById('modal-history-detail').addEventListener('click', (e) => {
+          if (e.target.id === 'modal-history-detail') this.closeHistoryDetailModal();
+        });
+
+        document.getElementById('btn-history-toggle-edit').addEventListener('click', () => {
+          this.enableHistoryEditMode();
+        });
+
+        document.getElementById('btn-history-cancel-edit').addEventListener('click', () => {
+          this.cancelHistoryEditMode();
+        });
+
+        document.getElementById('btn-history-save-changes').addEventListener('click', async () => {
+          await this.saveHistoryLogEdits();
+        });
+
+        // TAB 4: Library View Mode Toggle & Modal
+        const btnGrouped = document.getElementById('btn-view-grouped');
+        const btnAlpha = document.getElementById('btn-view-alpha');
+
+        btnGrouped.addEventListener('click', () => {
+          this.state.libraryViewMode = 'grouped';
+          this.updateLibraryToggleUI();
+          this.renderLibrary();
+        });
+
+        btnAlpha.addEventListener('click', () => {
+          this.state.libraryViewMode = 'alpha';
+          this.updateLibraryToggleUI();
+          this.renderLibrary();
+        });
+
+        document.getElementById('btn-open-exercise-modal').addEventListener('click', () => {
+          this.openExerciseModal();
+        });
+        document.getElementById('btn-close-exercise-modal').addEventListener('click', () => {
+          this.closeExerciseModal();
+        });
+        document.getElementById('btn-cancel-exercise').addEventListener('click', () => {
+          this.closeExerciseModal();
+        });
+        document.getElementById('modal-exercise').addEventListener('click', (e) => {
+          if (e.target.id === 'modal-exercise') this.closeExerciseModal();
+        });
+
+        const photoInput = document.getElementById('exercise-photo');
+        photoInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            this.state.pendingExercisePhotoBase64 = reader.result;
+            const previewWrap = document.getElementById('exercise-photo-preview-wrap');
+            const previewImg = document.getElementById('exercise-photo-preview');
+            const sizeLabel = document.getElementById('exercise-photo-size');
+            previewImg.src = reader.result;
+            const kb = Math.round((file.size || 0) / 1024);
+            sizeLabel.textContent = `${file.name} (${kb} KB)`;
+            previewWrap.classList.remove('hidden');
+          };
+          reader.readAsDataURL(file);
+        });
+
+        document.getElementById('btn-clear-exercise-photo').addEventListener('click', () => {
+          this.clearExercisePhotoInput();
+        });
+
+        document.getElementById('form-exercise').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await this.handleSaveExercise();
+        });
+
+        // TAB 2: Routine Modal Open / Close
+        document.getElementById('btn-open-routine-modal').addEventListener('click', () => {
+          this.openRoutineModal();
+        });
+        document.getElementById('btn-close-routine-modal').addEventListener('click', () => {
+          this.closeRoutineModal();
+        });
+        document.getElementById('btn-cancel-routine').addEventListener('click', () => {
+          this.closeRoutineModal();
+        });
+        document.getElementById('modal-routine').addEventListener('click', (e) => {
+          if (e.target.id === 'modal-routine') this.closeRoutineModal();
+        });
+
+        document.getElementById('btn-toggle-custom-group').addEventListener('click', () => {
+          const box = document.getElementById('custom-group-inline-box');
+          box.classList.toggle('hidden');
+          if (!box.classList.contains('hidden')) {
+            document.getElementById('custom-group-name-input').focus();
+          }
+        });
+
+        document.getElementById('btn-cancel-custom-group').addEventListener('click', () => {
+          document.getElementById('custom-group-inline-box').classList.add('hidden');
+          document.getElementById('custom-group-name-input').value = '';
+          document.getElementById('custom-group-error').classList.add('hidden');
+        });
+
+        document.getElementById('btn-save-custom-group').addEventListener('click', async () => {
+          await this.handleCreateCustomDataGroup();
+        });
+
+        document.getElementById('form-routine').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await this.handleSaveRoutine();
+        });
+
+        // TAB 5: Settings & Export Events
+        document.getElementById('toggle-setting-dark').addEventListener('click', async () => {
+          this.state.settings.darkMode = !this.state.settings.darkMode;
+          await this.persistAndApplySettings();
+        });
+
+        document.getElementById('toggle-setting-dyslexic').addEventListener('click', async () => {
+          this.state.settings.dyslexicFont = !this.state.settings.dyslexicFont;
+          await this.persistAndApplySettings();
+        });
+
+        document.getElementById('toggle-setting-contrast').addEventListener('click', async () => {
+          this.state.settings.highContrast = !this.state.settings.highContrast;
+          await this.persistAndApplySettings();
+        });
+
+        document.getElementById('setting-export-format').addEventListener('change', async (e) => {
+          this.state.settings.exportFormat = e.target.value;
+          await this.persistAndApplySettings();
+        });
+
+        document.getElementById('btn-export-workout-data').addEventListener('click', async () => {
+          await this.exportWorkoutData();
+        });
+      },
+
+      switchTab(tabKey) {
+        this.state.activeTab = tabKey;
+
+        const sections = {
+          active: {
+            el: 'tab-active',
+            title: 'Active Routine',
+            badge: this.state.activeSession ? 'In Progress' : 'Engine Ready'
+          },
+          routines: { el: 'tab-routines', title: 'Create Routines', badge: `${this.state.routines.length} Saved` },
+          history: { el: 'tab-history', title: 'Historical Log', badge: `${this.state.workoutLogs.length} Logs` },
+          library: { el: 'tab-library', title: 'Exercise Library', badge: `${this.state.exercises.length} Exercises` },
+          settings: { el: 'tab-settings', title: 'Settings', badge: (this.state.settings.exportFormat || 'csv').toUpperCase() }
+        };
+
+        Object.entries(sections).forEach(([key, cfg]) => {
+          const sectionEl = document.getElementById(cfg.el);
+          if (key === tabKey) {
+            sectionEl.classList.remove('hidden');
+            document.getElementById('header-title').textContent = cfg.title;
+            document.getElementById('header-badge').textContent = cfg.badge;
+          } else {
+            sectionEl.classList.add('hidden');
+          }
+        });
+
+        document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
+          const isCurrent = btn.getAttribute('data-tab') === tabKey;
+          btn.classList.toggle('text-blue-400', isCurrent);
+          btn.classList.toggle('text-slate-400', !isCurrent);
+        });
+      },
+
+      updateHeaderBadge() {
+        this.switchTab(this.state.activeTab);
+      },
+
+      renderAll() {
+        this.renderActiveWorkout();
+        this.renderLibrary();
+        this.renderRoutines();
+        this.renderHistoryLog();
+        this.renderSettingsUI();
+        this.renderPlaceholderCounters();
+        this.updateHeaderBadge();
+      },
+
+      renderPlaceholderCounters() {
+        const routineCountLabel = document.getElementById('active-routine-count-label');
+        if (routineCountLabel) {
+          const count = this.state.routines.length;
+          routineCountLabel.textContent = `${count} Routine${count === 1 ? '' : 's'} Available`;
+        }
+      },
+
+      /* =========================================================================
+         TAB 3: HISTORICAL LOG & RETROACTIVE EDITOR IMPLEMENTATION
+         ========================================================================= */
+
+      /**
+       * Dynamically compares `log.templateSnapshotAtCreation` against the current routine
+       * template in `this.state.routines`. Returns true if exercises or default set counts differ.
+       */
+      hasTemplateDrifted(log) {
+        if (!log.routineId) return false;
+        const currentRoutine = this.state.routines.find((r) => r.id === log.routineId);
+        if (!currentRoutine) return true; // Master routine was deleted
+
+        const snapshot = Array.isArray(log.templateSnapshotAtCreation) ? log.templateSnapshotAtCreation : [];
+        const currentExercises = Array.isArray(currentRoutine.exercises) ? currentRoutine.exercises : [];
+
+        if (snapshot.length !== currentExercises.length) return true;
+
+        for (let i = 0; i < snapshot.length; i++) {
+          const snapEx = snapshot[i];
+          const currEx = currentExercises[i];
+          if (!currEx) return true;
+          if (snapEx.exerciseId !== currEx.exerciseId) return true;
+          if ((Number(snapEx.defaultSets) || 3) !== (Number(currEx.defaultSets) || 3)) return true;
+          if ((snapEx.supersetWithExerciseId || null) !== (currEx.supersetWithExerciseId || null)) return true;
+        }
+
+        return false;
+      },
+
+      renderHistoryLog() {
+        const listEl = document.getElementById('history-logs-list');
+        const countLabel = document.getElementById('history-log-count-label');
+        const filterCat = this.state.historyCategoryFilter || 'All';
+
+        const exerciseCategoryLookup = new Map(this.state.exercises.map((e) => [e.id, e.category]));
+
+        // Filter logs in reverse-chronological order
+        const filteredLogs = this.state.workoutLogs.filter((log) => {
+          if (filterCat === 'All') return true;
+          const exList = Array.isArray(log.exercises) ? log.exercises : [];
+          return exList.some((ex) => {
+            const cat = ex.category || exerciseCategoryLookup.get(ex.exerciseId) || 'Misc';
+            return cat === filterCat;
+          });
+        });
+
+        countLabel.textContent = `${filteredLogs.length} Entr${filteredLogs.length === 1 ? 'y' : 'ies'}`;
+
+        if (filteredLogs.length === 0) {
+          listEl.innerHTML = `
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-2">
+              <p class="text-sm font-bold text-slate-200">
+                ${filterCat === 'All' ? 'No Completed Workouts Yet' : `No Workouts Found for ${this.escapeHtml(filterCat)}`}
+              </p>
+              <p class="text-xs text-slate-400">
+                ${
+                  filterCat === 'All'
+                    ? 'Complete a session in the Active Routine tab to populate your historical log.'
+                    : 'Switch the category dropdown back to All Categories to view other sessions.'
+                }
+              </p>
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = filteredLogs
+          .map((log) => {
+            const dateObj = new Date(log.date);
+            const formattedDate = dateObj.toLocaleDateString([], {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
+            const formattedTime = dateObj.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            const exList = Array.isArray(log.exercises) ? log.exercises : [];
+            const totalSets = exList.reduce((acc, ex) => acc + (Array.isArray(ex.sets) ? ex.sets.length : 0), 0);
+
+            const isModified = Boolean(log.wasModifiedOnTheFly);
+            const isDrifted = this.hasTemplateDrifted(log);
+
+            const categoriesInWorkout = Array.from(
+              new Set(exList.map((ex) => ex.category || exerciseCategoryLookup.get(ex.exerciseId) || 'Misc'))
+            );
+
+            return `
+              <article
+                data-history-card="${this.escapeHtml(log.id)}"
+                class="bg-slate-900 border border-slate-800 hover:border-blue-500/60 rounded-2xl p-4 space-y-3 shadow-md cursor-pointer transition"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <h3 class="text-base font-bold text-slate-100 truncate">${this.escapeHtml(log.routineName)}</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                      ${this.escapeHtml(formattedDate)} &bull; ${this.escapeHtml(formattedTime)}
+                    </p>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="inline-flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-blue-400">
+                      ${Number(log.durationMinutes) || 1} min
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Status Badges & Summary Pills -->
+                <div class="flex items-center flex-wrap gap-2">
+                  ${
+                    isModified
+                      ? `<span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                          </svg>
+                          <span>Modified</span>
+                        </span>`
+                      : ''
+                  }
+                  ${
+                    isDrifted
+                      ? `<span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                          </svg>
+                          <span>Template Drifted</span>
+                        </span>`
+                      : ''
+                  }
+                  <span class="text-[11px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-950 border border-slate-800">
+                    ${exList.length} Exercise${exList.length === 1 ? '' : 's'} &bull; ${totalSets} Set${totalSets === 1 ? '' : 's'}
+                  </span>
+                  ${categoriesInWorkout
+                    .map(
+                      (cat) =>
+                        `<span class="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300">${this.escapeHtml(cat)}</span>`
+                    )
+                    .join('')}
+                </div>
+              </article>
+            `;
+          })
+          .join('');
+
+        listEl.querySelectorAll('[data-history-card]').forEach((card) => {
+          card.addEventListener('click', () => {
+            const logId = card.getAttribute('data-history-card');
+            this.openHistoryDetailModal(logId);
+          });
+        });
+      },
+
+      toLocalDateTimeInputValue(isoString) {
+        const d = isoString ? new Date(isoString) : new Date();
+        if (Number.isNaN(d.getTime())) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      },
+
+      openHistoryDetailModal(logId) {
+        const log = this.state.workoutLogs.find((l) => l.id === logId);
+        if (!log) return;
+
+        this.state.selectedHistoryLogId = logId;
+        this.state.historyEditMode = false;
+        this.state.historyEditDraft = null;
+
+        this.renderHistoryDetailModalContent();
+        document.getElementById('modal-history-detail').classList.remove('hidden');
+      },
+
+      closeHistoryDetailModal() {
+        document.getElementById('modal-history-detail').classList.add('hidden');
+        this.state.selectedHistoryLogId = null;
+        this.state.historyEditMode = false;
+        this.state.historyEditDraft = null;
+      },
+
+      enableHistoryEditMode() {
+        const log = this.state.workoutLogs.find((l) => l.id === this.state.selectedHistoryLogId);
+        if (!log) return;
+
+        this.state.historyEditMode = true;
+        this.state.historyEditDraft = JSON.parse(JSON.stringify(log));
+        this.renderHistoryDetailModalContent();
+      },
+
+      cancelHistoryEditMode() {
+        this.state.historyEditMode = false;
+        this.state.historyEditDraft = null;
+        this.renderHistoryDetailModalContent();
+      },
+
+      renderHistoryDetailModalContent() {
+        const log = this.state.workoutLogs.find((l) => l.id === this.state.selectedHistoryLogId);
+        if (!log) return;
+
+        const isEdit = this.state.historyEditMode;
+        const activeLog = isEdit && this.state.historyEditDraft ? this.state.historyEditDraft : log;
+
+        const titleEl = document.getElementById('modal-history-detail-title');
+        const subtitleEl = document.getElementById('modal-history-detail-subtitle');
+        const editBtn = document.getElementById('btn-history-toggle-edit');
+        const footerEl = document.getElementById('modal-history-detail-footer');
+        const bodyEl = document.getElementById('modal-history-detail-body');
+
+        titleEl.textContent = activeLog.routineName || 'Workout Session';
+        const dObj = new Date(activeLog.date);
+        subtitleEl.textContent = `${dObj.toLocaleDateString([], {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        })} at ${dObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${activeLog.durationMinutes} min)`;
+
+        if (isEdit) {
+          editBtn.classList.add('hidden');
+          footerEl.classList.remove('hidden');
+        } else {
+          editBtn.classList.remove('hidden');
+          footerEl.classList.add('hidden');
+        }
+
+        if (!isEdit) {
+          // READ-ONLY BREAKDOWN VIEW
+          const isModified = Boolean(activeLog.wasModifiedOnTheFly);
+          const isDrifted = this.hasTemplateDrifted(activeLog);
+          const exercises = Array.isArray(activeLog.exercises) ? activeLog.exercises : [];
+
+          bodyEl.innerHTML = `
+            <div class="flex items-center flex-wrap gap-2">
+              <span class="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-blue-400">
+                Duration: ${Number(activeLog.durationMinutes) || 1} min
+              </span>
+              ${
+                isModified
+                  ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      Modified On-The-Fly
+                    </span>`
+                  : ''
+              }
+              ${
+                isDrifted
+                  ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                      Template Drifted
+                    </span>`
+                  : ''
+              }
+            </div>
+
+            <div class="space-y-3">
+              ${
+                exercises.length === 0
+                  ? `<p class="text-xs text-slate-400 italic">No exercises recorded in this session.</p>`
+                  : exercises
+                      .map((ex, idx) => {
+                        const sets = Array.isArray(ex.sets) ? ex.sets : [];
+                        return `
+                          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                              <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-xs font-mono font-bold text-blue-400">#${idx + 1}</span>
+                                <h4 class="text-sm font-bold text-slate-100 truncate">${this.escapeHtml(ex.name)}</h4>
+                              </div>
+                              <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0">
+                                ${this.escapeHtml(ex.category || 'Misc')}
+                              </span>
+                            </div>
+
+                            ${
+                              ex.instanceNotes
+                                ? `<div class="bg-slate-900 border border-slate-800/80 rounded-xl p-2.5 text-xs text-slate-300">
+                                    <span class="font-semibold text-slate-400 block text-[10px] uppercase tracking-wider mb-0.5">Instance Notes</span>
+                                    ${this.escapeHtml(ex.instanceNotes)}
+                                  </div>`
+                                : ''
+                            }
+
+                            <div class="space-y-1.5">
+                              ${
+                                sets.length === 0
+                                  ? `<p class="text-xs text-slate-500 italic">No sets logged.</p>`
+                                  : sets
+                                      .map(
+                                        (s, sIdx) => `
+                                          <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs">
+                                            <div class="flex items-center gap-2.5">
+                                              <span class="font-mono font-bold text-slate-400">Set ${s.setNumber || sIdx + 1}</span>
+                                              <span class="font-mono font-semibold text-slate-100">
+                                                ${s.weight !== null && s.weight !== undefined && s.weight !== '' ? `${this.escapeHtml(s.weight)} lbs` : '— lbs'}
+                                                &times;
+                                                ${s.reps !== null && s.reps !== undefined && s.reps !== '' ? `${this.escapeHtml(s.reps)} reps` : '— reps'}
+                                              </span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 shrink-0">
+                                              <span class="text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                                                s.movementType === 'Isolated'
+                                                  ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                                                  : 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                                              }">
+                                                ${this.escapeHtml(s.movementType || 'Compound')}
+                                              </span>
+                                              <span class="text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                                                s.failure
+                                                  ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                                                  : 'bg-slate-950 text-slate-400 border-slate-800'
+                                              }">
+                                                ${s.failure ? 'Failure: Y' : 'Failure: N'}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        `
+                                      )
+                                      .join('')
+                              }
+                            </div>
+                          </div>
+                        `;
+                      })
+                      .join('')
+              }
+            </div>
+          `;
+          return;
+        }
+
+        // RETROACTIVE EDIT MODE VIEW
+        const draft = this.state.historyEditDraft;
+        const exercises = Array.isArray(draft.exercises) ? draft.exercises : [];
+
+        bodyEl.innerHTML = `
+          <!-- Session Metadata Editor (Date & Duration) -->
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="edit-log-datetime" class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                Session Date &amp; Time
+              </label>
+              <input
+                type="datetime-local"
+                id="edit-log-datetime"
+                value="${this.escapeHtml(this.toLocalDateTimeInputValue(draft.date))}"
+                class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:border-blue-500"
+              >
+            </div>
+            <div>
+              <label for="edit-log-duration" class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                Duration (Minutes)
+              </label>
+              <input
+                type="number"
+                min="1"
+                id="edit-log-duration"
+                value="${Number(draft.durationMinutes) || 1}"
+                class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 text-xs font-mono focus:outline-none focus:border-blue-500"
+              >
+            </div>
+          </div>
+
+          <!-- Exercises & Sets Editor -->
+          <div class="space-y-3">
+            ${exercises
+              .map((ex, exIdx) => {
+                const sets = Array.isArray(ex.sets) ? ex.sets : [];
+                return `
+                  <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-sm font-bold text-slate-100">#${exIdx + 1} ${this.escapeHtml(ex.name)}</span>
+                      <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                        ${this.escapeHtml(ex.category || 'Misc')}
+                      </span>
+                    </div>
+
+                    <div>
+                      <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                        Instance Notes
+                      </label>
+                      <textarea
+                        rows="2"
+                        data-edit-ex-notes="${exIdx}"
+                        placeholder="Session notes..."
+                        class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:border-blue-500 resize-none"
+                      >${this.escapeHtml(ex.instanceNotes || '')}</textarea>
+                    </div>
+
+                    <div class="space-y-2">
+                      ${sets
+                        .map(
+                          (s, sIdx) => `
+                            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 flex flex-wrap sm:flex-nowrap items-center gap-2">
+                              <span class="w-6 h-6 rounded bg-slate-950 text-[11px] font-mono font-bold text-slate-300 flex items-center justify-center shrink-0">
+                                ${sIdx + 1}
+                              </span>
+                              <input
+                                type="number"
+                                step="any"
+                                placeholder="lbs"
+                                value="${s.weight !== null && s.weight !== undefined ? this.escapeHtml(s.weight) : ''}"
+                                data-edit-set-weight="${exIdx}|${sIdx}"
+                                class="w-20 flex-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-xs font-mono"
+                              >
+                              <input
+                                type="number"
+                                step="1"
+                                placeholder="Reps"
+                                value="${s.reps !== null && s.reps !== undefined ? this.escapeHtml(s.reps) : ''}"
+                                data-edit-set-reps="${exIdx}|${sIdx}"
+                                class="w-16 flex-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-xs font-mono"
+                              >
+                              <button
+                                type="button"
+                                data-edit-set-movement="${exIdx}|${sIdx}"
+                                class="px-2 py-1.5 rounded-lg text-[10px] font-semibold border shrink-0 ${
+                                  s.movementType === 'Isolated'
+                                    ? 'bg-purple-500/15 text-purple-300 border-purple-500/35'
+                                    : 'bg-blue-500/15 text-blue-300 border-blue-500/35'
+                                }"
+                              >
+                                ${s.movementType === 'Isolated' ? 'Isolated' : 'Compound'}
+                              </button>
+                              <button
+                                type="button"
+                                data-edit-set-failure="${exIdx}|${sIdx}"
+                                class="px-2 py-1.5 rounded-lg text-[10px] font-semibold border shrink-0 ${
+                                  s.failure
+                                    ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                                    : 'bg-slate-950 text-slate-400 border-slate-800'
+                                }"
+                              >
+                                ${s.failure ? 'Failure: Y' : 'Failure: N'}
+                              </button>
+                              <button
+                                type="button"
+                                data-edit-delete-set="${exIdx}|${sIdx}"
+                                class="p-1.5 rounded-lg text-slate-400 hover:text-red-400 transition ml-auto shrink-0"
+                                title="Delete Set"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          `
+                        )
+                        .join('')}
+                    </div>
+                  </div>
+                `;
+              })
+              .join('')}
+          </div>
+        `;
+
+        // Bind Retroactive Edit Inputs
+        const dtInput = bodyEl.querySelector('#edit-log-datetime');
+        if (dtInput) {
+          dtInput.addEventListener('change', () => {
+            const parsed = new Date(dtInput.value);
+            if (!Number.isNaN(parsed.getTime())) {
+              draft.date = parsed.toISOString();
+            }
+          });
+        }
+
+        const durInput = bodyEl.querySelector('#edit-log-duration');
+        if (durInput) {
+          durInput.addEventListener('input', () => {
+            draft.durationMinutes = Math.max(1, parseInt(durInput.value, 10) || 1);
+          });
+        }
+
+        bodyEl.querySelectorAll('[data-edit-ex-notes]').forEach((ta) => {
+          ta.addEventListener('input', () => {
+            const exIdx = Number(ta.getAttribute('data-edit-ex-notes'));
+            if (draft.exercises[exIdx]) {
+              draft.exercises[exIdx].instanceNotes = ta.value;
+            }
+          });
+        });
+
+        bodyEl.querySelectorAll('[data-edit-set-weight]').forEach((inp) => {
+          inp.addEventListener('input', () => {
+            const [exIdx, sIdx] = inp.getAttribute('data-edit-set-weight').split('|').map(Number);
+            if (draft.exercises[exIdx]?.sets[sIdx]) {
+              draft.exercises[exIdx].sets[sIdx].weight = inp.value === '' ? null : Number(inp.value);
+            }
+          });
+        });
+
+        bodyEl.querySelectorAll('[data-edit-set-reps]').forEach((inp) => {
+          inp.addEventListener('input', () => {
+            const [exIdx, sIdx] = inp.getAttribute('data-edit-set-reps').split('|').map(Number);
+            if (draft.exercises[exIdx]?.sets[sIdx]) {
+              draft.exercises[exIdx].sets[sIdx].reps = inp.value === '' ? null : Number(inp.value);
+            }
+          });
+        });
+
+        bodyEl.querySelectorAll('[data-edit-set-movement]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const [exIdx, sIdx] = btn.getAttribute('data-edit-set-movement').split('|').map(Number);
+            const targetSet = draft.exercises[exIdx]?.sets[sIdx];
+            if (targetSet) {
+              targetSet.movementType = targetSet.movementType === 'Isolated' ? 'Compound' : 'Isolated';
+              this.renderHistoryDetailModalContent();
+            }
+          });
+        });
+
+        bodyEl.querySelectorAll('[data-edit-set-failure]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const [exIdx, sIdx] = btn.getAttribute('data-edit-set-failure').split('|').map(Number);
+            const targetSet = draft.exercises[exIdx]?.sets[sIdx];
+            if (targetSet) {
+              targetSet.failure = !targetSet.failure;
+              this.renderHistoryDetailModalContent();
+            }
+          });
+        });
+
+        bodyEl.querySelectorAll('[data-edit-delete-set]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const [exIdx, sIdx] = btn.getAttribute('data-edit-delete-set').split('|').map(Number);
+            if (draft.exercises[exIdx]?.sets) {
+              draft.exercises[exIdx].sets.splice(sIdx, 1);
+              draft.exercises[exIdx].sets.forEach((s, idx) => {
+                s.setNumber = idx + 1;
+              });
+              this.renderHistoryDetailModalContent();
+            }
+          });
+        });
+      },
+
+      async saveHistoryLogEdits() {
+        const draft = this.state.historyEditDraft;
+        if (!draft) return;
+
+        await this.db.put('workoutLogs', draft);
+        this.state.historyEditMode = false;
+        this.state.historyEditDraft = null;
+
+        await this.loadAllData();
+        this.renderAll();
+        this.renderHistoryDetailModalContent();
+      },
+
+      /* =========================================================================
+         TAB 5: SETTINGS & EXPORT IMPLEMENTATION
+         ========================================================================= */
+
+      applySettingsToDOM() {
+        const htmlEl = document.documentElement;
+        const s = this.state.settings;
+
+        htmlEl.classList.toggle('dark', Boolean(s.darkMode));
+        htmlEl.classList.toggle('dyslexic-font', Boolean(s.dyslexicFont));
+        htmlEl.classList.toggle('high-contrast', Boolean(s.highContrast));
+      },
+
+      async persistAndApplySettings() {
+        this.applySettingsToDOM();
+        await this.db.put('settings', {
+          id: 'default',
+          darkMode: Boolean(this.state.settings.darkMode),
+          dyslexicFont: Boolean(this.state.settings.dyslexicFont),
+          highContrast: Boolean(this.state.settings.highContrast),
+          exportFormat: this.state.settings.exportFormat || 'csv'
+        });
+        this.renderSettingsUI();
+        this.updateHeaderBadge();
+      },
+
+      renderSettingsUI() {
+        const s = this.state.settings;
+
+        const updateSwitch = (btnId, knobId, isActive) => {
+          const btn = document.getElementById(btnId);
+          const knob = document.getElementById(knobId);
+          if (!btn || !knob) return;
+          btn.setAttribute('aria-checked', String(Boolean(isActive)));
+          btn.classList.toggle('bg-blue-600', Boolean(isActive));
+          btn.classList.toggle('bg-slate-700', !isActive);
+          knob.classList.toggle('translate-x-5', Boolean(isActive));
+          knob.classList.toggle('translate-x-0', !isActive);
+        };
+
+        updateSwitch('toggle-setting-dark', 'knob-setting-dark', s.darkMode);
+        updateSwitch('toggle-setting-dyslexic', 'knob-setting-dyslexic', s.dyslexicFont);
+        updateSwitch('toggle-setting-contrast', 'knob-setting-contrast', s.highContrast);
+
+        const formatSelect = document.getElementById('setting-export-format');
+        if (formatSelect) {
+          formatSelect.value = s.exportFormat || 'csv';
+        }
+      },
+
+      escapeCsvField(val) {
+        if (val === null || val === undefined) return '""';
+        const str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+      },
+
+      async exportWorkoutData() {
+        await this.loadAllData();
+        const format = this.state.settings.exportFormat || 'csv';
+        const timestamp = new Date().toISOString().slice(0, 10);
+        let blob;
+        let filename;
+
+        if (format === 'json') {
+          const fullBackup = {
+            database: 'GymTrackerDB',
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            exercises: this.state.exercises,
+            routines: this.state.routines,
+            dataGroups: this.state.dataGroups,
+            workoutLogs: this.state.workoutLogs,
+            settings: this.state.settings
+          };
+          blob = new Blob([JSON.stringify(fullBackup, null, 2)], { type: 'application/json;charset=utf-8;' });
+          filename = `gym-tracker-backup-${timestamp}.json`;
+        } else {
+          const headers = [
+            'Log_ID',
+            'Date',
+            'Routine_Name',
+            'Exercise_Name',
+            'Set_Number',
+            'Weight',
+            'Reps',
+            'Movement_Type',
+            'Muscular_Failure',
+            'Notes'
+          ];
+          const rows = [headers.join(',')];
+
+          for (const log of this.state.workoutLogs) {
+            const exercises = Array.isArray(log.exercises) ? log.exercises : [];
+            if (exercises.length === 0) {
+              rows.push(
+                [
+                  this.escapeCsvField(log.id),
+                  this.escapeCsvField(log.date),
+                  this.escapeCsvField(log.routineName),
+                  this.escapeCsvField(''),
+                  this.escapeCsvField(''),
+                  this.escapeCsvField(''),
+                  this.escapeCsvField(''),
+                  this.escapeCsvField(''),
+                  this.escapeCsvField(''),
+                  this.escapeCsvField('')
+                ].join(',')
+              );
+              continue;
+            }
+
+            for (const ex of exercises) {
+              const sets = Array.isArray(ex.sets) ? ex.sets : [];
+              if (sets.length === 0) {
+                rows.push(
+                  [
+                    this.escapeCsvField(log.id),
+                    this.escapeCsvField(log.date),
+                    this.escapeCsvField(log.routineName),
+                    this.escapeCsvField(ex.name),
+                    this.escapeCsvField(''),
+                    this.escapeCsvField(''),
+                    this.escapeCsvField(''),
+                    this.escapeCsvField(''),
+                    this.escapeCsvField(''),
+                    this.escapeCsvField(ex.instanceNotes || '')
+                  ].join(',')
+                );
+                continue;
+              }
+
+              sets.forEach((s, idx) => {
+                rows.push(
+                  [
+                    this.escapeCsvField(log.id),
+                    this.escapeCsvField(log.date),
+                    this.escapeCsvField(log.routineName),
+                    this.escapeCsvField(ex.name),
+                    this.escapeCsvField(s.setNumber || idx + 1),
+                    this.escapeCsvField(s.weight !== null && s.weight !== undefined ? s.weight : ''),
+                    this.escapeCsvField(s.reps !== null && s.reps !== undefined ? s.reps : ''),
+                    this.escapeCsvField(s.movementType || 'Compound'),
+                    this.escapeCsvField(s.failure ? 'Yes' : 'No'),
+                    this.escapeCsvField(ex.instanceNotes || '')
+                  ].join(',')
+                );
+              });
+            }
+          }
+
+          blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+          filename = `gym-workout-logs-${timestamp}.csv`;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+        const msgEl = document.getElementById('export-status-msg');
+        if (msgEl) {
+          msgEl.textContent = `Downloaded ${filename}`;
+          msgEl.classList.remove('hidden');
+          setTimeout(() => msgEl.classList.add('hidden'), 4000);
+        }
+      },
+
+      /* =========================================================================
+         TAB 1: ACTIVE WORKOUT ENGINE & DATA GROUP INHERITANCE
+         ========================================================================= */
+
+      getHistoricalSetData(exerciseId, setIndex, routineId, dataGroupId) {
+        const groupObj = this.state.dataGroups.find((g) => g.id === dataGroupId);
+        const groupType = groupObj ? groupObj.type : 'global';
+
+        const sortedLogs = [...this.state.workoutLogs].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+
+        const matchingRoutineIds = new Set(
+          this.state.routines.filter((r) => r.dataGroupId === dataGroupId).map((r) => r.id)
+        );
+
+        for (const log of sortedLogs) {
+          if (groupType === 'routine') {
+            if (!routineId || log.routineId !== routineId) continue;
+          } else if (groupType === 'custom') {
+            const matchesLogGroup = log.dataGroupId === dataGroupId || matchingRoutineIds.has(log.routineId);
+            if (!matchesLogGroup) continue;
+          }
+
+          const loggedExercises = Array.isArray(log.exercises) ? log.exercises : [];
+          const matchedEx = loggedExercises.find((e) => e.exerciseId === exerciseId);
+
+          if (matchedEx && Array.isArray(matchedEx.sets) && matchedEx.sets.length > 0) {
+            const targetSet = matchedEx.sets[setIndex] || matchedEx.sets[matchedEx.sets.length - 1];
+            if (targetSet) {
+              return {
+                weight: targetSet.weight !== undefined && targetSet.weight !== null ? String(targetSet.weight) : '',
+                reps: targetSet.reps !== undefined && targetSet.reps !== null ? String(targetSet.reps) : '',
+                movementType: targetSet.movementType === 'Isolated' ? 'Isolated' : 'Compound'
+              };
+            }
+          }
+        }
+
+        return null;
+      },
+
+      buildActiveExerciseItem(exerciseId, defaultSetsCount = 3, supersetWithExerciseId = null, routineId = null, dataGroupId = 'global') {
+        const libEx = this.state.exercises.find((e) => e.id === exerciseId);
+        const name = libEx ? libEx.name : 'Unknown Exercise';
+        const category = libEx ? libEx.category : 'Misc';
+        const description = libEx ? libEx.description : '';
+
+        const sets = [];
+        const count = Math.max(1, Number(defaultSetsCount) || 3);
+
+        for (let i = 0; i < count; i++) {
+          const inherited = this.getHistoricalSetData(exerciseId, i, routineId, dataGroupId);
+          sets.push({
+            id: this.generateId('set'),
+            weight: inherited ? inherited.weight : '',
+            reps: inherited ? inherited.reps : '',
+            movementType: inherited ? inherited.movementType : 'Compound',
+            failure: false
+          });
+        }
+
+        return {
+          instanceId: this.generateId('inst'),
+          exerciseId,
+          name,
+          category,
+          description,
+          supersetWithExerciseId: supersetWithExerciseId || null,
+          instanceNotes: '',
+          sets
+        };
+      },
+
+      startCustomWorkout() {
+        const now = Date.now();
+        this.state.activeSession = {
+          id: this.generateId('session'),
+          routineId: null,
+          routineName: 'Custom Workout',
+          dataGroupId: 'global',
+          startTime: now,
+          elapsedSeconds: 0,
+          wasModifiedOnTheFly: false,
+          templateSnapshotAtCreation: [],
+          exercises: []
+        };
+
+        this.startSessionTimer();
+        this.renderAll();
+      },
+
+      startWorkoutFromRoutine(routineId) {
+        const routine = this.state.routines.find((r) => r.id === routineId);
+        if (!routine) return;
+
+        const templateSnapshot = JSON.parse(JSON.stringify(routine.exercises || []));
+        const dataGroupId = routine.dataGroupId || 'global';
+
+        const activeExercises = (routine.exercises || []).map((item) =>
+          this.buildActiveExerciseItem(
+            item.exerciseId,
+            item.defaultSets,
+            item.supersetWithExerciseId,
+            routine.id,
+            dataGroupId
+          )
+        );
+
+        this.state.activeSession = {
+          id: this.generateId('session'),
+          routineId: routine.id,
+          routineName: routine.name,
+          dataGroupId,
+          startTime: Date.now(),
+          elapsedSeconds: 0,
+          wasModifiedOnTheFly: false,
+          templateSnapshotAtCreation: templateSnapshot,
+          exercises: activeExercises
+        };
+
+        this.closePickRoutineModal();
+        this.startSessionTimer();
+        this.renderAll();
+      },
+
+      startSessionTimer() {
+        this.stopSessionTimer();
+        this.updateTimerDisplay();
+        this.state.activeTimerInterval = setInterval(() => {
+          if (!this.state.activeSession) return;
+          const diffSeconds = Math.floor((Date.now() - this.state.activeSession.startTime) / 1000);
+          this.state.activeSession.elapsedSeconds = Math.max(0, diffSeconds);
+          this.updateTimerDisplay();
+        }, 1000);
+      },
+
+      stopSessionTimer() {
+        if (this.state.activeTimerInterval) {
+          clearInterval(this.state.activeTimerInterval);
+          this.state.activeTimerInterval = null;
+        }
+      },
+
+      formatDurationMMSS(totalSeconds) {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        const mm = String(mins).padStart(2, '0');
+        const ss = String(secs).padStart(2, '0');
+        return `${mm}:${ss}`;
+      },
+
+      updateTimerDisplay() {
+        const timerEl = document.getElementById('active-session-timer');
+        if (timerEl && this.state.activeSession) {
+          timerEl.textContent = this.formatDurationMMSS(this.state.activeSession.elapsedSeconds || 0);
+        }
+      },
+
+      openPickRoutineModal() {
+        const listEl = document.getElementById('pick-routine-list');
+        const groupMap = new Map(this.state.dataGroups.map((g) => [g.id, g]));
+
+        if (this.state.routines.length === 0) {
+          listEl.innerHTML = `
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-center space-y-3">
+              <p class="text-sm text-slate-300 font-semibold">No Saved Routines Found</p>
+              <p class="text-xs text-slate-400">Create a routine template in the Create Routines tab first, or launch an Empty Custom Workout.</p>
+              <button
+                type="button"
+                id="btn-jump-to-create-routine"
+                class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition"
+              >
+                Go to Create Routines
+              </button>
+            </div>
+          `;
+          const jumpBtn = listEl.querySelector('#btn-jump-to-create-routine');
+          if (jumpBtn) {
+            jumpBtn.addEventListener('click', () => {
+              this.closePickRoutineModal();
+              this.switchTab('routines');
+            });
+          }
+        } else {
+          listEl.innerHTML = this.state.routines
+            .map((r) => {
+              const group = groupMap.get(r.dataGroupId);
+              const groupName = group ? group.name : r.dataGroupId;
+              const exCount = Array.isArray(r.exercises) ? r.exercises.length : 0;
+              return `
+                <div class="bg-slate-950 border border-slate-800 hover:border-blue-500/60 rounded-2xl p-4 flex items-center justify-between gap-3 transition">
+                  <div class="min-w-0">
+                    <h4 class="text-sm font-bold text-slate-100 truncate">${this.escapeHtml(r.name)}</h4>
+                    <p class="text-xs text-slate-400 mt-0.5 truncate">
+                      ${exCount} Exercise${exCount === 1 ? '' : 's'} &bull; ${this.escapeHtml(groupName)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    data-launch-routine="${this.escapeHtml(r.id)}"
+                    class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shrink-0 transition shadow"
+                  >
+                    Start
+                  </button>
+                </div>
+              `;
+            })
+            .join('');
+
+          listEl.querySelectorAll('[data-launch-routine]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const rId = btn.getAttribute('data-launch-routine');
+              this.startWorkoutFromRoutine(rId);
+            });
+          });
+        }
+
+        document.getElementById('modal-pick-routine').classList.remove('hidden');
+      },
+
+      closePickRoutineModal() {
+        document.getElementById('modal-pick-routine').classList.add('hidden');
+      },
+
+      openActiveAddExerciseModal() {
+        if (!this.state.activeSession) return;
+        const listEl = document.getElementById('active-add-exercise-list');
+        const sortedEx = [...this.state.exercises].sort((a, b) => a.name.localeCompare(b.name));
+
+        if (sortedEx.length === 0) {
+          listEl.innerHTML = `
+            <p class="text-xs text-slate-400 text-center py-4">No exercises in Library. Add one in the Library tab first.</p>
+          `;
+        } else {
+          listEl.innerHTML = sortedEx
+            .map(
+              (ex) => `
+                <div class="bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl p-3 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <h4 class="text-xs font-bold text-slate-100 truncate">${this.escapeHtml(ex.name)}</h4>
+                      <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">${this.escapeHtml(ex.category)}</span>
+                    </div>
+                    ${
+                      ex.description
+                        ? `<p class="text-[11px] text-slate-400 truncate mt-0.5">${this.escapeHtml(ex.description)}</p>`
+                        : ''
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    data-append-active-ex="${this.escapeHtml(ex.id)}"
+                    class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shrink-0 transition"
+                  >
+                    + Append
+                  </button>
+                </div>
+              `
+            )
+            .join('');
+
+          listEl.querySelectorAll('[data-append-active-ex]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const exId = btn.getAttribute('data-append-active-ex');
+              this.appendExerciseToActiveWorkout(exId);
+            });
+          });
+        }
+
+        document.getElementById('modal-active-add-exercise').classList.remove('hidden');
+      },
+
+      closeActiveAddExerciseModal() {
+        document.getElementById('modal-active-add-exercise').classList.add('hidden');
+      },
+
+      triggerStructureModification() {
+        const session = this.state.activeSession;
+        if (!session) return;
+        session.wasModifiedOnTheFly = true;
+        this.renderActiveWorkout();
+
+        if (session.routineId) {
+          document.getElementById('modal-template-mutation').classList.remove('hidden');
+        }
+      },
+
+      async handleMutationChoice(shouldUpdateMaster) {
+        document.getElementById('modal-template-mutation').classList.add('hidden');
+        const session = this.state.activeSession;
+        if (!session || !session.routineId || !shouldUpdateMaster) {
+          return;
+        }
+
+        const existingRoutine = await this.db.get('routines', session.routineId);
+        if (!existingRoutine) return;
+
+        const updatedTemplateExercises = session.exercises.map((exItem) => ({
+          exerciseId: exItem.exerciseId,
+          defaultSets: Math.max(1, exItem.sets.length),
+          supersetWithExerciseId: exItem.supersetWithExerciseId || null
+        }));
+
+        const updatedRoutine = {
+          ...existingRoutine,
+          exercises: updatedTemplateExercises
+        };
+
+        await this.db.put('routines', updatedRoutine);
+        await this.loadAllData();
+        this.renderRoutines();
+        this.renderHistoryLog();
+        this.renderPlaceholderCounters();
+      },
+
+      appendExerciseToActiveWorkout(exerciseId) {
+        const session = this.state.activeSession;
+        if (!session) return;
+
+        const newItem = this.buildActiveExerciseItem(
+          exerciseId,
+          3,
+          null,
+          session.routineId,
+          session.dataGroupId
+        );
+        session.exercises.push(newItem);
+        this.closeActiveAddExerciseModal();
+        this.triggerStructureModification();
+      },
+
+      deleteExerciseFromActiveWorkout(instanceId) {
+        const session = this.state.activeSession;
+        if (!session) return;
+        session.exercises = session.exercises.filter((ex) => ex.instanceId !== instanceId);
+        this.triggerStructureModification();
+      },
+
+      addSetToActiveExercise(instanceId) {
+        const session = this.state.activeSession;
+        if (!session) return;
+        const exItem = session.exercises.find((ex) => ex.instanceId === instanceId);
+        if (!exItem) return;
+
+        const newSetIndex = exItem.sets.length;
+        const inherited = this.getHistoricalSetData(
+          exItem.exerciseId,
+          newSetIndex,
+          session.routineId,
+          session.dataGroupId
+        );
+
+        exItem.sets.push({
+          id: this.generateId('set'),
+          weight: inherited ? inherited.weight : '',
+          reps: inherited ? inherited.reps : '',
+          movementType: inherited ? inherited.movementType : 'Compound',
+          failure: false
+        });
+
+        this.triggerStructureModification();
+      },
+
+      deleteSetFromActiveExercise(instanceId, setId) {
+        const session = this.state.activeSession;
+        if (!session) return;
+        const exItem = session.exercises.find((ex) => ex.instanceId === instanceId);
+        if (!exItem) return;
+
+        exItem.sets = exItem.sets.filter((s) => s.id !== setId);
+        this.triggerStructureModification();
+      },
+
+      async finishActiveWorkout() {
+        const session = this.state.activeSession;
+        if (!session) return;
+
+        this.stopSessionTimer();
+        const durationMinutes = Math.max(1, Math.round((Date.now() - session.startTime) / 60000));
+
+        const workoutRecord = {
+          id: this.generateId('log'),
+          routineId: session.routineId,
+          routineName: session.routineName,
+          dataGroupId: session.dataGroupId || 'global',
+          date: new Date().toISOString(),
+          startTime: new Date(session.startTime).toISOString(),
+          durationMinutes,
+          exercises: session.exercises.map((ex) => ({
+            exerciseId: ex.exerciseId,
+            name: ex.name,
+            category: ex.category,
+            instanceNotes: ex.instanceNotes || '',
+            supersetWithExerciseId: ex.supersetWithExerciseId || null,
+            sets: ex.sets.map((s, idx) => ({
+              setNumber: idx + 1,
+              weight: s.weight === '' ? null : Number(s.weight),
+              reps: s.reps === '' ? null : Number(s.reps),
+              movementType: s.movementType,
+              failure: Boolean(s.failure)
+            }))
+          })),
+          wasModifiedOnTheFly: Boolean(session.wasModifiedOnTheFly),
+          templateSnapshotAtCreation: session.templateSnapshotAtCreation || []
+        };
+
+        await this.db.put('workoutLogs', workoutRecord);
+        this.state.activeSession = null;
+        await this.loadAllData();
+        this.renderAll();
+        this.switchTab('history');
+      },
+
+      renderActiveWorkout() {
+        const emptyStateEl = document.getElementById('active-empty-state');
+        const activeContainerEl = document.getElementById('active-session-container');
+        const session = this.state.activeSession;
+
+        if (!session) {
+          emptyStateEl.classList.remove('hidden');
+          activeContainerEl.classList.add('hidden');
+          return;
+        }
+
+        emptyStateEl.classList.add('hidden');
+        activeContainerEl.classList.remove('hidden');
+
+        document.getElementById('active-session-title').textContent = session.routineName;
+        this.updateTimerDisplay();
+
+        const groupObj = this.state.dataGroups.find((g) => g.id === session.dataGroupId);
+        const groupLabel = groupObj ? groupObj.name : 'Global (All Routines)';
+        document.getElementById('active-session-datagroup-badge').textContent = `Data Group: ${groupLabel}`;
+
+        const modBadge = document.getElementById('active-session-modified-badge');
+        if (session.wasModifiedOnTheFly) {
+          modBadge.classList.remove('hidden');
+        } else {
+          modBadge.classList.add('hidden');
+        }
+
+        const listEl = document.getElementById('active-exercises-list');
+        const exerciseMap = new Map(this.state.exercises.map((e) => [e.id, e]));
+
+        if (session.exercises.length === 0) {
+          listEl.innerHTML = `
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-2">
+              <p class="text-sm font-semibold text-slate-200">No Exercises in Current Session</p>
+              <p class="text-xs text-slate-400">Tap <span class="text-blue-400 font-semibold">+ Add Exercise</span> below to append an exercise from your Library.</p>
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = session.exercises
+          .map((exItem, exIndex) => {
+            const supersetPartner = exItem.supersetWithExerciseId
+              ? exerciseMap.get(exItem.supersetWithExerciseId)
+              : null;
+
+            const setRowsHtml = exItem.sets
+              .map((setObj, setIdx) => {
+                const isIsolated = setObj.movementType === 'Isolated';
+                const isFailure = Boolean(setObj.failure);
+
+                return `
+                  <div class="bg-slate-950/90 border border-slate-800/90 rounded-xl p-2.5 flex flex-wrap sm:flex-nowrap items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono font-bold text-slate-300 flex items-center justify-center shrink-0">
+                      ${setIdx + 1}
+                    </span>
+
+                    <div class="flex-1 min-w-[72px]">
+                      <input
+                        type="number"
+                        step="any"
+                        inputmode="decimal"
+                        placeholder="lbs"
+                        value="${this.escapeHtml(setObj.weight)}"
+                        data-set-weight="${this.escapeHtml(exItem.instanceId)}|${this.escapeHtml(setObj.id)}"
+                        class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-blue-500"
+                        aria-label="Weight for set ${setIdx + 1}"
+                      >
+                    </div>
+
+                    <div class="flex-1 min-w-[64px]">
+                      <input
+                        type="number"
+                        step="1"
+                        inputmode="numeric"
+                        placeholder="Reps"
+                        value="${this.escapeHtml(setObj.reps)}"
+                        data-set-reps="${this.escapeHtml(exItem.instanceId)}|${this.escapeHtml(setObj.id)}"
+                        class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-blue-500"
+                        aria-label="Reps for set ${setIdx + 1}"
+                      >
+                    </div>
+
+                    <button
+                      type="button"
+                      data-toggle-movement="${this.escapeHtml(exItem.instanceId)}|${this.escapeHtml(setObj.id)}"
+                      class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition shrink-0 ${
+                        isIsolated
+                          ? 'bg-purple-500/15 text-purple-300 border-purple-500/35'
+                          : 'bg-blue-500/15 text-blue-300 border-blue-500/35'
+                      }"
+                    >
+                      ${isIsolated ? 'Isolated' : 'Compound'}
+                    </button>
+
+                    <button
+                      type="button"
+                      data-toggle-failure="${this.escapeHtml(exItem.instanceId)}|${this.escapeHtml(setObj.id)}"
+                      class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition shrink-0 ${
+                        isFailure
+                          ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                          : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                      }"
+                    >
+                      ${isFailure ? 'Failure: Y' : 'Failure: N'}
+                    </button>
+
+                    <button
+                      type="button"
+                      data-delete-set="${this.escapeHtml(exItem.instanceId)}|${this.escapeHtml(setObj.id)}"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-900 transition shrink-0 ml-auto"
+                      aria-label="Delete Set"
+                      title="Delete Set"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                `;
+              })
+              .join('');
+
+            return `
+              <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-xs font-mono font-bold text-blue-400">#${exIndex + 1}</span>
+                      <h3 class="text-base font-bold text-slate-100">${this.escapeHtml(exItem.name)}</h3>
+                      <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                        ${this.escapeHtml(exItem.category)}
+                      </span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                      ${
+                        exItem.description
+                          ? this.escapeHtml(exItem.description)
+                          : '<span class="italic text-slate-600">No permanent library description</span>'
+                      }
+                    </p>
+                    ${
+                      supersetPartner
+                        ? `<p class="text-[11px] text-amber-400 font-medium mt-1">⚡ Superset with: ${this.escapeHtml(supersetPartner.name)}</p>`
+                        : ''
+                    }
+                  </div>
+
+                  <button
+                    type="button"
+                    data-delete-active-ex="${this.escapeHtml(exItem.instanceId)}"
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-800 transition shrink-0"
+                    title="Remove Exercise from Workout"
+                    aria-label="Remove Exercise from Workout"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                    Instance Notes (This Session Only)
+                  </label>
+                  <textarea
+                    rows="2"
+                    data-instance-notes="${this.escapeHtml(exItem.instanceId)}"
+                    placeholder="Session-specific cues, machine pin setting, or joint feel..."
+                    class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-blue-500 resize-none"
+                  >${this.escapeHtml(exItem.instanceNotes)}</textarea>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-1">
+                    <span>Sets (${exItem.sets.length})</span>
+                    <span>Weight / Reps / Type / Failure</span>
+                  </div>
+                  ${setRowsHtml}
+                </div>
+
+                <button
+                  type="button"
+                  data-add-set="${this.escapeHtml(exItem.instanceId)}"
+                  class="w-full py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-blue-400 font-semibold text-xs border border-slate-700/80 transition flex items-center justify-center gap-1.5"
+                >
+                  <span>+ Add Set</span>
+                </button>
+              </article>
+            `;
+          })
+          .join('');
+
+        listEl.querySelectorAll('[data-instance-notes]').forEach((textarea) => {
+          textarea.addEventListener('input', () => {
+            const instId = textarea.getAttribute('data-instance-notes');
+            const exItem = session.exercises.find((e) => e.instanceId === instId);
+            if (exItem) {
+              exItem.instanceNotes = textarea.value;
+            }
+          });
+        });
+
+        listEl.querySelectorAll('[data-set-weight]').forEach((input) => {
+          input.addEventListener('input', () => {
+            const [instId, setId] = input.getAttribute('data-set-weight').split('|');
+            const exItem = session.exercises.find((e) => e.instanceId === instId);
+            const setObj = exItem?.sets.find((s) => s.id === setId);
+            if (setObj) {
+              setObj.weight = input.value;
+            }
+          });
+        });
+
+        listEl.querySelectorAll('[data-set-reps]').forEach((input) => {
+          input.addEventListener('input', () => {
+            const [instId, setId] = input.getAttribute('data-set-reps').split('|');
+            const exItem = session.exercises.find((e) => e.instanceId === instId);
+            const setObj = exItem?.sets.find((s) => s.id === setId);
+            if (setObj) {
+              setObj.reps = input.value;
+            }
+          });
+        });
+
+        listEl.querySelectorAll('[data-toggle-movement]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const [instId, setId] = btn.getAttribute('data-toggle-movement').split('|');
+            const exItem = session.exercises.find((e) => e.instanceId === instId);
+            const setObj = exItem?.sets.find((s) => s.id === setId);
+            if (setObj) {
+              setObj.movementType = setObj.movementType === 'Isolated' ? 'Compound' : 'Isolated';
+              this.renderActiveWorkout();
+            }
+          });
+        });
+
+        listEl.querySelectorAll('[data-toggle-failure]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const [instId, setId] = btn.getAttribute('data-toggle-failure').split('|');
+            const exItem = session.exercises.find((e) => e.instanceId === instId);
+            const setObj = exItem?.sets.find((s) => s.id === setId);
+            if (setObj) {
+              setObj.failure = !setObj.failure;
+              this.renderActiveWorkout();
+            }
+          });
+        });
+
+        listEl.querySelectorAll('[data-delete-set]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const [instId, setId] = btn.getAttribute('data-delete-set').split('|');
+            this.deleteSetFromActiveExercise(instId, setId);
+          });
+        });
+
+        listEl.querySelectorAll('[data-add-set]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const instId = btn.getAttribute('data-add-set');
+            this.addSetToActiveExercise(instId);
+          });
+        });
+
+        listEl.querySelectorAll('[data-delete-active-ex]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const instId = btn.getAttribute('data-delete-active-ex');
+            this.deleteExerciseFromActiveWorkout(instId);
+          });
+        });
+      },
+
+      /* =========================================================================
+         TAB 4: EXERCISE LIBRARY IMPLEMENTATION
+         ========================================================================= */
+      updateLibraryToggleUI() {
+        const isGrouped = this.state.libraryViewMode === 'grouped';
+        const btnGrouped = document.getElementById('btn-view-grouped');
+        const btnAlpha = document.getElementById('btn-view-alpha');
+        const modeBadge = document.getElementById('library-mode-badge');
+
+        if (isGrouped) {
+          btnGrouped.className = 'py-2 px-3 rounded-lg text-xs font-semibold transition text-center bg-blue-600 text-white shadow';
+          btnAlpha.className = 'py-2 px-3 rounded-lg text-xs font-semibold transition text-center text-slate-400 hover:text-slate-200';
+          modeBadge.textContent = 'Grouped';
+        } else {
+          btnAlpha.className = 'py-2 px-3 rounded-lg text-xs font-semibold transition text-center bg-blue-600 text-white shadow';
+          btnGrouped.className = 'py-2 px-3 rounded-lg text-xs font-semibold transition text-center text-slate-400 hover:text-slate-200';
+          modeBadge.textContent = 'A-Z';
+        }
+      },
+
+      renderExerciseItemCard(ex) {
+        const hasPhoto = Boolean(ex.photoBase64);
+        return `
+          <div class="bg-slate-950/90 border border-slate-800/90 rounded-xl p-3.5 flex items-start gap-3.5 hover:border-slate-700 transition">
+            ${
+              hasPhoto
+                ? `<img src="${ex.photoBase64}" alt="${this.escapeHtml(ex.name)}" class="w-14 h-14 rounded-lg object-cover border border-slate-700 shrink-0 bg-slate-900">`
+                : `<div class="w-11 h-11 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 text-xs font-bold text-blue-400">
+                    ${this.escapeHtml(ex.name.slice(0, 2).toUpperCase())}
+                   </div>`
+            }
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <h4 class="text-sm font-semibold text-slate-100 truncate">${this.escapeHtml(ex.name)}</h4>
+                <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                  ${this.escapeHtml(ex.category)}
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed break-words">
+                ${ex.description ? this.escapeHtml(ex.description) : '<span class="italic text-slate-600">No description provided</span>'}
+              </p>
+            </div>
+          </div>
+        `;
+      },
+
+      renderLibrary() {
+        const container = document.getElementById('library-content-container');
+        const subtitle = document.getElementById('library-count-subtitle');
+        const total = this.state.exercises.length;
+        subtitle.textContent = `${total} exercise${total === 1 ? '' : 's'} stored`;
+
+        if (this.state.libraryViewMode === 'alpha') {
+          const sortedAll = [...this.state.exercises].sort((a, b) => a.name.localeCompare(b.name));
+          if (sortedAll.length === 0) {
+            container.innerHTML = `
+              <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-sm text-slate-400">
+                No exercises in library. Tap the + button to add your first exercise.
+              </div>
+            `;
+            return;
+          }
+          container.innerHTML = `
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2.5">
+              ${sortedAll.map((ex) => this.renderExerciseItemCard(ex)).join('')}
+            </div>
+          `;
+          return;
+        }
+
+        const sortedCategories = [...this.state.categories].sort((a, b) => a.localeCompare(b));
+
+        container.innerHTML = sortedCategories
+          .map((category) => {
+            const catExercises = this.state.exercises
+              .filter((ex) => ex.category === category)
+              .sort((a, b) => a.name.localeCompare(b.name));
+
+            const isOpen = this.state.openAccordionCategories.has(category);
+            const count = catExercises.length;
+
+            return `
+              <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <button
+                  type="button"
+                  data-accordion-cat="${this.escapeHtml(category)}"
+                  class="w-full px-4 py-3.5 flex items-center justify-between text-left hover:bg-slate-800/50 transition"
+                >
+                  <div class="flex items-center gap-2.5">
+                    <span class="text-sm font-bold text-slate-100">${this.escapeHtml(category)}</span>
+                    <span class="text-xs font-mono px-2 py-0.5 rounded-full ${
+                      count > 0
+                        ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                        : 'bg-slate-800 text-slate-500 border border-slate-700'
+                    }">${count}</span>
+                  </div>
+                  <svg
+                    class="w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div class="${isOpen ? 'block' : 'hidden'} px-3 pb-3 pt-1 border-t border-slate-800/70 space-y-2">
+                  ${
+                    count > 0
+                      ? catExercises.map((ex) => this.renderExerciseItemCard(ex)).join('')
+                      : `<p class="text-xs text-slate-500 italic py-2 px-1">No exercises in ${this.escapeHtml(category)}.</p>`
+                  }
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+
+        container.querySelectorAll('[data-accordion-cat]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const cat = btn.getAttribute('data-accordion-cat');
+            if (this.state.openAccordionCategories.has(cat)) {
+              this.state.openAccordionCategories.delete(cat);
+            } else {
+              this.state.openAccordionCategories.add(cat);
+            }
+            this.renderLibrary();
+          });
+        });
+      },
+
+      openExerciseModal() {
+        document.getElementById('form-exercise').reset();
+        this.clearExercisePhotoInput();
+        document.getElementById('exercise-form-error').classList.add('hidden');
+        document.getElementById('modal-exercise').classList.remove('hidden');
+        setTimeout(() => document.getElementById('exercise-name').focus(), 50);
+      },
+
+      closeExerciseModal() {
+        document.getElementById('modal-exercise').classList.add('hidden');
+      },
+
+      clearExercisePhotoInput() {
+        this.state.pendingExercisePhotoBase64 = null;
+        const photoInput = document.getElementById('exercise-photo');
+        photoInput.value = '';
+        document.getElementById('exercise-photo-preview').src = '';
+        document.getElementById('exercise-photo-preview-wrap').classList.add('hidden');
+      },
+
+      async handleSaveExercise() {
+        const nameInput = document.getElementById('exercise-name');
+        const categoryInput = document.getElementById('exercise-category');
+        const descInput = document.getElementById('exercise-description');
+        const errorEl = document.getElementById('exercise-form-error');
+
+        const name = nameInput.value.trim();
+        const category = categoryInput.value;
+        const description = descInput.value.trim();
+
+        if (!name) {
+          errorEl.textContent = 'Please enter an exercise name.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        const newExercise = {
+          id: this.generateId('ex'),
+          name,
+          category,
+          description,
+          photoBase64: this.state.pendingExercisePhotoBase64 || null
+        };
+
+        await this.db.put('exercises', newExercise);
+        this.state.openAccordionCategories.add(category);
+        await this.loadAllData();
+        this.renderAll();
+        this.closeExerciseModal();
+      },
+
+      /* =========================================================================
+         TAB 2: CREATE ROUTINES IMPLEMENTATION
+         ========================================================================= */
+      renderRoutines() {
+        const container = document.getElementById('routines-list-container');
+        const routines = this.state.routines;
+
+        if (routines.length === 0) {
+          container.innerHTML = `
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-2">
+              <div class="w-11 h-11 rounded-full bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+                </svg>
+              </div>
+              <h3 class="text-sm font-bold text-slate-200">No Saved Routines Yet</h3>
+              <p class="text-xs text-slate-400 max-w-xs mx-auto">
+                Tap <span class="text-slate-200 font-semibold">+ New Routine</span> above to assign a Data Group, pick exercises, set target volume, and configure supersets.
+              </p>
+            </div>
+          `;
+          return;
+        }
+
+        const groupMap = new Map(this.state.dataGroups.map((g) => [g.id, g]));
+        const exerciseMap = new Map(this.state.exercises.map((e) => [e.id, e]));
+
+        container.innerHTML = routines
+          .map((routine) => {
+            const group = groupMap.get(routine.dataGroupId);
+            const groupName = group ? group.name : routine.dataGroupId;
+            const groupType = group ? group.type : 'custom';
+            const exercisesList = Array.isArray(routine.exercises) ? routine.exercises : [];
+
+            const badgeColor =
+              groupType === 'global'
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
+                : groupType === 'routine'
+                ? 'bg-purple-500/10 text-purple-400 border-purple-500/25'
+                : 'bg-blue-500/10 text-blue-400 border-blue-500/25';
+
+            const exerciseRowsHtml = exercisesList
+              .map((item, idx) => {
+                const exObj = exerciseMap.get(item.exerciseId);
+                const exName = exObj ? exObj.name : 'Unknown Exercise';
+                const exCategory = exObj ? exObj.category : '';
+                const supersetEx = item.supersetWithExerciseId
+                  ? exerciseMap.get(item.supersetWithExerciseId)
+                  : null;
+
+                return `
+                  <div class="bg-slate-950/80 border border-slate-800/90 rounded-xl px-3 py-2.5 flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-slate-500">${idx + 1}.</span>
+                        <span class="text-xs font-semibold text-slate-100 truncate">${this.escapeHtml(exName)}</span>
+                        ${
+                          exCategory
+                            ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${this.escapeHtml(exCategory)}</span>`
+                            : ''
+                        }
+                      </div>
+                      ${
+                        supersetEx
+                          ? `<p class="text-[11px] text-amber-400 font-medium mt-1 flex items-center gap-1">
+                              <span>⚡ Superset with: ${this.escapeHtml(supersetEx.name)}</span>
+                             </p>`
+                          : ''
+                      }
+                    </div>
+                    <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-blue-400 shrink-0">
+                      ${Number(item.defaultSets) || 3} Sets
+                    </span>
+                  </div>
+                `;
+              })
+              .join('');
+
+            return `
+              <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <h3 class="text-base font-bold text-slate-100 truncate">${this.escapeHtml(routine.name)}</h3>
+                    ${
+                      routine.description
+                        ? `<p class="text-xs text-slate-400 mt-0.5 leading-relaxed">${this.escapeHtml(routine.description)}</p>`
+                        : ''
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    data-delete-routine="${this.escapeHtml(routine.id)}"
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-800 transition shrink-0"
+                    title="Delete Routine"
+                    aria-label="Delete Routine"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="flex items-center flex-wrap gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${badgeColor}">
+                    <span>Data Group: ${this.escapeHtml(groupName)}</span>
+                  </span>
+                  <span class="text-[11px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-950 border border-slate-800">
+                    ${exercisesList.length} Exercise${exercisesList.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                  ${exerciseRowsHtml}
+                </div>
+              </article>
+            `;
+          })
+          .join('');
+
+        container.querySelectorAll('[data-delete-routine]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const routineId = btn.getAttribute('data-delete-routine');
+            await this.db.delete('routines', routineId);
+            await this.loadAllData();
+            this.renderAll();
+          });
+        });
+      },
+
+      openRoutineModal() {
+        document.getElementById('form-routine').reset();
+        document.getElementById('routine-form-error').classList.add('hidden');
+        document.getElementById('custom-group-inline-box').classList.add('hidden');
+        document.getElementById('custom-group-name-input').value = '';
+        document.getElementById('custom-group-error').classList.add('hidden');
+
+        this.state.routineDraftSelections = {};
+        this.populateDataGroupSelect();
+        this.renderRoutineExercisePicker();
+
+        document.getElementById('modal-routine').classList.remove('hidden');
+        setTimeout(() => document.getElementById('routine-name').focus(), 50);
+      },
+
+      closeRoutineModal() {
+        document.getElementById('modal-routine').classList.add('hidden');
+      },
+
+      populateDataGroupSelect(selectedId = 'global') {
+        const selectEl = document.getElementById('routine-datagroup');
+        selectEl.innerHTML = this.state.dataGroups
+          .map(
+            (g) =>
+              `<option value="${this.escapeHtml(g.id)}" ${g.id === selectedId ? 'selected' : ''}>
+                ${this.escapeHtml(g.name)} (${this.escapeHtml(g.type)})
+              </option>`
+          )
+          .join('');
+      },
+
+      async handleCreateCustomDataGroup() {
+        const inputEl = document.getElementById('custom-group-name-input');
+        const errorEl = document.getElementById('custom-group-error');
+        const name = inputEl.value.trim();
+
+        if (!name) {
+          errorEl.textContent = 'Enter a custom group name.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        const newGroup = {
+          id: this.generateId('dg'),
+          name,
+          type: 'custom'
+        };
+
+        await this.db.put('dataGroups', newGroup);
+        await this.loadAllData();
+        this.populateDataGroupSelect(newGroup.id);
+
+        inputEl.value = '';
+        errorEl.classList.add('hidden');
+        document.getElementById('custom-group-inline-box').classList.add('hidden');
+      },
+
+      renderRoutineExercisePicker() {
+        const pickerEl = document.getElementById('routine-exercise-picker');
+        const countEl = document.getElementById('routine-selected-count');
+        const allExercises = [...this.state.exercises].sort((a, b) => a.name.localeCompare(b.name));
+
+        const selectedIds = Object.keys(this.state.routineDraftSelections).filter(
+          (id) => this.state.routineDraftSelections[id]?.selected
+        );
+        countEl.textContent = `${selectedIds.length} selected`;
+
+        if (allExercises.length === 0) {
+          pickerEl.innerHTML = `
+            <p class="text-xs text-slate-400 bg-slate-950 border border-slate-800 rounded-xl p-3">
+              No exercises found. Add exercises in the Library tab first.
+            </p>
+          `;
+          return;
+        }
+
+        pickerEl.innerHTML = allExercises
+          .map((ex) => {
+            const draft = this.state.routineDraftSelections[ex.id] || {
+              selected: false,
+              defaultSets: 3,
+              supersetWithExerciseId: ''
+            };
+
+            const supersetOptions = allExercises
+              .filter((other) => other.id !== ex.id)
+              .map(
+                (other) =>
+                  `<option value="${this.escapeHtml(other.id)}" ${
+                    draft.supersetWithExerciseId === other.id ? 'selected' : ''
+                  }>${this.escapeHtml(other.name)} (${this.escapeHtml(other.category)})</option>`
+              )
+              .join('');
+
+            return `
+              <div class="rounded-xl border transition ${
+                draft.selected
+                  ? 'bg-slate-950 border-blue-500/60'
+                  : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              } p-3">
+                <label class="flex items-center justify-between gap-3 cursor-pointer">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <input
+                      type="checkbox"
+                      data-pick-ex="${this.escapeHtml(ex.id)}"
+                      ${draft.selected ? 'checked' : ''}
+                      class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
+                    >
+                    <span class="text-xs font-semibold text-slate-100 truncate">${this.escapeHtml(ex.name)}</span>
+                  </div>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0">
+                    ${this.escapeHtml(ex.category)}
+                  </span>
+                </label>
+
+                ${
+                  draft.selected
+                    ? `<div class="mt-3 pt-2.5 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Target Sets
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="30"
+                            data-sets-ex="${this.escapeHtml(ex.id)}"
+                            value="${Number(draft.defaultSets) || 3}"
+                            class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:border-blue-500"
+                          >
+                        </div>
+                        <div>
+                          <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Superset Pairing (Optional)
+                          </label>
+                          <select
+                            data-superset-ex="${this.escapeHtml(ex.id)}"
+                            class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:border-blue-500"
+                          >
+                            <option value="">None</option>
+                            ${supersetOptions}
+                          </select>
+                        </div>
+                      </div>`
+                    : ''
+                }
+              </div>
+            `;
+          })
+          .join('');
+
+        pickerEl.querySelectorAll('[data-pick-ex]').forEach((checkbox) => {
+          checkbox.addEventListener('change', () => {
+            const exId = checkbox.getAttribute('data-pick-ex');
+            const prev = this.state.routineDraftSelections[exId] || {
+              defaultSets: 3,
+              supersetWithExerciseId: ''
+            };
+            this.state.routineDraftSelections[exId] = {
+              ...prev,
+              selected: checkbox.checked
+            };
+            this.renderRoutineExercisePicker();
+          });
+        });
+
+        pickerEl.querySelectorAll('[data-sets-ex]').forEach((input) => {
+          input.addEventListener('input', () => {
+            const exId = input.getAttribute('data-sets-ex');
+            const val = Math.max(1, parseInt(input.value, 10) || 1);
+            if (this.state.routineDraftSelections[exId]) {
+              this.state.routineDraftSelections[exId].defaultSets = val;
+            }
+          });
+        });
+
+        pickerEl.querySelectorAll('[data-superset-ex]').forEach((select) => {
+          select.addEventListener('change', () => {
+            const exId = select.getAttribute('data-superset-ex');
+            if (this.state.routineDraftSelections[exId]) {
+              this.state.routineDraftSelections[exId].supersetWithExerciseId = select.value || null;
+            }
+          });
+        });
+      },
+
+      async handleSaveRoutine() {
+        const name = document.getElementById('routine-name').value.trim();
+        const description = document.getElementById('routine-description').value.trim();
+        const dataGroupId = document.getElementById('routine-datagroup').value;
+        const errorEl = document.getElementById('routine-form-error');
+
+        if (!name) {
+          errorEl.textContent = 'Please provide a routine name.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        const selectedExercises = Object.entries(this.state.routineDraftSelections)
+          .filter(([, cfg]) => cfg && cfg.selected)
+          .map(([exerciseId, cfg]) => ({
+            exerciseId,
+            defaultSets: Math.max(1, parseInt(cfg.defaultSets, 10) || 3),
+            supersetWithExerciseId: cfg.supersetWithExerciseId || null
+          }));
+
+        if (selectedExercises.length === 0) {
+          errorEl.textContent = 'Select at least one exercise for this routine.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        const newRoutine = {
+          id: this.generateId('rt'),
+          name,
+          description,
+          dataGroupId,
+          exercises: selectedExercises
+        };
+
+        await this.db.put('routines', newRoutine);
+        await this.loadAllData();
+        this.renderAll();
+        this.closeRoutineModal();
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      window.App.init();
+    });
+  </script>
+</body>
+</html>
+
+```
